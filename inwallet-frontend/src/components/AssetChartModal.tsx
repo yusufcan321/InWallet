@@ -80,19 +80,19 @@ const AssetChartModal: React.FC<AssetChartModalProps> = ({ isOpen, onClose, asse
             <AreaChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="assetColorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={asset.color} stopOpacity={0.5}/>
-                  <stop offset="95%" stopColor={asset.color} stopOpacity={0}/>
+                  <stop offset="5%" stopColor={asset.color} stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor={asset.color} stopOpacity={0.1}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₺${Math.round(val/1000)}k`} />
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="name" stroke="rgba(255, 255, 255, 0.9)" fontSize={13} tick={{ fill: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }} tickLine={false} axisLine={false} />
+              <YAxis stroke="rgba(255, 255, 255, 0.9)" fontSize={13} tick={{ fill: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }} tickLine={false} axisLine={false} tickFormatter={(val) => `₺${Math.round(val/1000)}k`} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
               <Tooltip 
                 formatter={(value: number) => `₺${value.toLocaleString()}`}
-                contentStyle={{ background: 'rgba(15, 23, 42, 0.95)', border: `1px solid ${asset.color}50`, borderRadius: '8px', boxShadow: `0 4px 12px rgba(0,0,0,0.5)` }}
-                itemStyle={{ color: '#fff', fontWeight: 600 }}
+                contentStyle={{ background: 'rgba(15, 23, 42, 0.95)', border: `1px solid ${asset.color}80`, borderRadius: '8px', boxShadow: `0 4px 20px ${asset.color}40` }}
+                itemStyle={{ color: '#fff', fontWeight: 'bold' }}
               />
-              <Area type="monotone" dataKey="value" stroke={asset.color} strokeWidth={3} fillOpacity={1} fill="url(#assetColorValue)" />
+              <Area type="monotone" dataKey="value" stroke={asset.color} strokeWidth={4} fillOpacity={1} fill="url(#assetColorValue)" style={{ filter: `drop-shadow(0 0 10px ${asset.color}80)` }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

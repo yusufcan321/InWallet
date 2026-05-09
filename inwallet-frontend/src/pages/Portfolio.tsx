@@ -54,19 +54,19 @@ const Portfolio: React.FC = () => {
             <AreaChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--accent-blue)" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="var(--accent-blue)" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="var(--accent-neon-blue)" stopOpacity={0.7}/>
+                  <stop offset="95%" stopColor="var(--accent-blue)" stopOpacity={0.1}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₺${val/1000}k`} />
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="name" stroke="rgba(255, 255, 255, 0.9)" fontSize={13} tick={{ fill: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }} tickLine={false} axisLine={false} />
+              <YAxis stroke="rgba(255, 255, 255, 0.9)" fontSize={13} tick={{ fill: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }} tickLine={false} axisLine={false} tickFormatter={(val) => `₺${val/1000}k`} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
               <Tooltip 
                 formatter={(value: number) => `₺${value.toLocaleString()}`}
-                contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                itemStyle={{ color: '#fff' }}
+                contentStyle={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', boxShadow: '0 0 20px rgba(96, 165, 250, 0.3)' }}
+                itemStyle={{ color: '#fff', fontWeight: 'bold' }}
               />
-              <Area type="monotone" dataKey="value" stroke="var(--accent-blue)" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+              <Area type="monotone" dataKey="value" stroke="var(--accent-neon-blue)" strokeWidth={4} fillOpacity={1} fill="url(#colorValue)" style={{ filter: 'drop-shadow(0 0 8px rgba(96, 165, 250, 0.5))' }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
