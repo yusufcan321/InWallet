@@ -38,15 +38,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentView, onNavig
         <div className="sidebar-brand">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="8" width="32" height="20" rx="4" fill="url(#side_card_bg)" stroke="rgba(255,255,255,0.15)" strokeWidth="1" style={{ filter: 'drop-shadow(0 6px 12px rgba(37, 99, 235, 0.4))' }}/>
-              <path d="M8 17L12 23L15 19L18 23L22 17" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 5px rgba(255, 255, 255, 0.9))' }}/>
-              <circle cx="28" cy="14" r="1.5" fill="#60A5FA" style={{ filter: 'drop-shadow(0 0 3px #60A5FA)' }}/>
-              <circle cx="28" cy="22" r="1.5" fill="#3B82F6" style={{ filter: 'drop-shadow(0 0 3px #3B82F6)' }}/>
-              <path d="M2 18C12 10 24 10 34 14" stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none"/>
+              <rect x="2" y="10" width="32" height="18" rx="4" fill="url(#side_wallet_bg)" stroke="url(#side_wallet_border)" strokeWidth="1" style={{ filter: 'drop-shadow(0 6px 12px rgba(37, 99, 235, 0.4))' }}/>
+              <path d="M2 14C12 18 24 18 34 14V24C34 26.209 32.209 28 30 28H6C3.791 28 2 26.209 2 24V14Z" fill="url(#side_wallet_front)"/>
+              <path d="M2 14C12 18 24 18 34 14" stroke="url(#side_flap_edge)" strokeWidth="1.5" strokeLinecap="round"/>
+              <rect x="13" y="16" width="10" height="8" rx="2" fill="#0F172A" stroke="rgba(255,255,255,0.2)" strokeWidth="1" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}/>
+              <path d="M14.5 18.5L16 21L18 18.5L20 21L21.5 18.5" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 3px #60A5FA)' }}/>
               <defs>
-                <linearGradient id="side_card_bg" x1="2" y1="8" x2="34" y2="28" gradientUnits="userSpaceOnUse">
+                <linearGradient id="side_wallet_bg" x1="2" y1="10" x2="34" y2="28" gradientUnits="userSpaceOnUse">
                   <stop stopColor="#1E3A8A"/>
-                  <stop offset="1" stopColor="#0F172A"/>
+                  <stop offset="1" stopColor="#1D4ED8"/>
+                </linearGradient>
+                <linearGradient id="side_wallet_front" x1="2" y1="14" x2="34" y2="28" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#3B82F6"/>
+                  <stop offset="1" stopColor="#2563EB"/>
+                </linearGradient>
+                <linearGradient id="side_wallet_border" x1="2" y1="10" x2="34" y2="28" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#93C5FD"/>
+                  <stop offset="1" stopColor="#3B82F6"/>
+                </linearGradient>
+                <linearGradient id="side_flap_edge" x1="2" y1="14" x2="34" y2="14" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#FFFFFF" stopOpacity="0.8"/>
+                  <stop offset="1" stopColor="#FFFFFF" stopOpacity="0.1"/>
                 </linearGradient>
               </defs>
             </svg>
