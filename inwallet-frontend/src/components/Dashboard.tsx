@@ -112,7 +112,7 @@ const Dashboard: React.FC = () => {
         <div style={{ marginBottom: '20px', marginTop: '15px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span>Ev Peşinatı</span>
-            <span className="text-success">45%</span>
+            <span className="text-muted">45%</span>
           </div>
           <div style={{ width: '100%', height: '8px', background: 'var(--bg-primary)', borderRadius: '4px', overflow: 'hidden' }}>
             <div style={{ width: '45%', height: '100%', background: 'var(--accent-blue)' }}></div>
