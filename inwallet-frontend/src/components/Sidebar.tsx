@@ -38,15 +38,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentView, onNavig
         <div className="sidebar-brand">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 12L14 26L22 12" stroke="url(#logo_side_g1)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 4px 6px rgba(37, 99, 235, 0.5))' }}/>
-              <path d="M16 12L24 26L32 12" stroke="url(#logo_side_g2)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 4px 6px rgba(96, 165, 250, 0.6))' }}/>
+              <path d="M4 10C4 8.895 4.895 8 6 8H30C31.105 8 32 8.895 32 10V26C32 27.105 31.105 28 30 28H6C4.895 28 4 27.105 4 26V10Z" fill="url(#side_inside)"/>
+              <path d="M4 10C4 8.895 4.895 8 6 8H30C31.105 8 32 8.895 32 10V14L24 24L18 16L12 24L4 14V10Z" fill="url(#side_flap)" style={{ filter: 'drop-shadow(0 4px 6px rgba(37, 99, 235, 0.6))' }}/>
+              <path d="M4 14L12 24L18 16L24 24L32 14" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 5px rgba(255, 255, 255, 0.8))' }}/>
               <defs>
-                <linearGradient id="logo_side_g1" x1="6" y1="12" x2="22" y2="26" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#3B82F6"/>
-                  <stop offset="1" stopColor="#1E40AF"/>
+                <linearGradient id="side_inside" x1="4" y1="8" x2="32" y2="28" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#1E3A8A"/>
+                  <stop offset="1" stopColor="#0F172A"/>
                 </linearGradient>
-                <linearGradient id="logo_side_g2" x1="16" y1="12" x2="32" y2="26" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#93C5FD"/>
+                <linearGradient id="side_flap" x1="4" y1="8" x2="32" y2="24" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#60A5FA"/>
                   <stop offset="1" stopColor="#2563EB"/>
                 </linearGradient>
               </defs>
