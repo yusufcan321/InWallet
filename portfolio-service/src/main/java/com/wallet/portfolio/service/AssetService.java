@@ -3,6 +3,8 @@ package com.wallet.portfolio.service;
 import com.wallet.portfolio.entity.Asset;
 import com.wallet.portfolio.repository.AssetRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,10 +15,12 @@ public class AssetService {
 
     private final AssetRepository assetRepository;
 
+    @Cacheable(value = "assets", key = "#userId")
     public List<Asset> getAssetsByUserId(Long userId) {
         return assetRepository.findByUserId(userId);
     }
 
+    @CacheEvict(value = "assets", allEntries = true)
     public Asset createAsset(Asset asset) {
         return assetRepository.save(asset);
     }
