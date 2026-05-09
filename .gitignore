@@ -1,0 +1,29 @@
+# Maven
+target/
+.m2/
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Gradle
+.gradle/
+build/
+
+# Spring Boot
+*.log
+application-*.properties
+
+# Environment
+.env
+.env.local
+
+# OS
+Thumbs.db
