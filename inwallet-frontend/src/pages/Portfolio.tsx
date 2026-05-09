@@ -58,8 +58,8 @@ const Portfolio: React.FC = () => {
                   <stop offset="95%" stopColor="var(--accent-blue)" stopOpacity={0.1}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="name" stroke="rgba(255, 255, 255, 0.9)" fontSize={13} tick={{ fill: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }} tickLine={false} axisLine={false} />
-              <YAxis stroke="rgba(255, 255, 255, 0.9)" fontSize={13} tick={{ fill: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }} tickLine={false} axisLine={false} tickFormatter={(val) => `₺${val/1000}k`} />
+              <XAxis dataKey="name" stroke="rgba(255, 255, 255, 0.9)" fontSize={13} tick={{ fill: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }} tickLine={false} axisLine={false} tickMargin={10} padding={{ left: 15, right: 15 }} />
+              <YAxis stroke="rgba(255, 255, 255, 0.9)" fontSize={13} tick={{ fill: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }} tickLine={false} axisLine={false} tickFormatter={(val) => `₺${val/1000}k`} tickMargin={10} />
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
               <Tooltip 
                 formatter={(value: number) => `₺${value.toLocaleString()}`}
