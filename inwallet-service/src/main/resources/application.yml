@@ -1,0 +1,25 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: inwallet-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/wallet_db
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:sk-default-placeholder-key-for-now}
+      chat:
+        options:
+          model: gpt-3.5-turbo
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
