@@ -20,7 +20,7 @@ const Dashboard: React.FC = () => {
         <div className="dashboard-grid">
           <div className="col-span-4 glass-card">
             <div className="card-header">
-              <span className="card-title">Toplam Net Değer</span>
+              <span className="card-title">Toplam Net Varlık</span>
             </div>
             <div className="stat-value heading-gradient">₺124,500.00</div>
             <div className="stat-label text-success">+5.2% bu ay</div>
