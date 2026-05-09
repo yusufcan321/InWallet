@@ -51,7 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentView, onNavig
 
         {/* Mini Wallet Card */}
         <div className="sidebar-wallet-card">
-          <div className="wallet-label">Toplam Net Değer</div>
+          <div className="wallet-label">Toplam Net Varlık</div>
           <div className="wallet-amount">₺124,500.00</div>
           <div className="wallet-growth">▲ +5.2% bu ay</div>
         </div>
