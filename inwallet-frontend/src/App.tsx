@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Dashboard from './components/Dashboard';
 import AIChatWidget from './components/AIChatWidget';
@@ -10,11 +10,19 @@ import Transactions from './pages/Transactions';
 import Goals from './pages/Goals';
 import Settings from './pages/Settings';
 import Favorites from './pages/Favorites';
+import BudgetAnalysis from './pages/BudgetAnalysis';
+import DCAPlanner from './pages/DCAPlanner';
+import EmergencyFund from './pages/EmergencyFund';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
+  const [theme, setTheme] = useState('dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const renderView = () => {
     switch(currentView) {
@@ -23,7 +31,10 @@ const App: React.FC = () => {
       case 'transactions': return <Transactions />;
       case 'goals': return <Goals />;
       case 'favorites': return <Favorites />;
-      case 'settings': return <Settings />;
+      case 'settings': return <Settings currentTheme={theme} onThemeChange={setTheme} />;
+      case 'budget': return <BudgetAnalysis />;
+      case 'dca': return <DCAPlanner />;
+      case 'emergency': return <EmergencyFund />;
       default: return <Dashboard />;
     }
   };
@@ -32,9 +43,11 @@ const App: React.FC = () => {
     <>
       <Sidebar 
         isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
+        onClose={() => setIsSidebarOpen(false)}
         currentView={currentView}
         onNavigate={setCurrentView}
+        theme={theme}
+        onThemeToggle={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       />
       
       <div className="app-container">

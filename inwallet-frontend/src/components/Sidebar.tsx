@@ -6,6 +6,8 @@ interface SidebarProps {
   onClose: () => void;
   currentView: string;
   onNavigate: (viewId: string) => void;
+  theme: string;
+  onThemeToggle: () => void;
 }
 
 const menuItems = [
@@ -13,6 +15,9 @@ const menuItems = [
   { id: 'portfolio', icon: '💼', label: 'Portföyüm', desc: 'Varlıklarınızı inceleyin', color: 'rgba(139, 92, 246, 0.2)', iconColor: '#8b5cf6' },
   { id: 'transactions', icon: '🔁', label: 'İşlem Geçmişi', desc: 'Gelir ve gider akışı', badge: 3, color: 'rgba(16, 185, 129, 0.2)', iconColor: '#10b981' },
   { id: 'goals', icon: '🎯', label: 'Hedeflerim', desc: 'Hayallerinizi planlayın', color: 'rgba(245, 158, 11, 0.2)', iconColor: '#f59e0b' },
+  { id: 'budget', icon: '📊', label: 'Bütçe Analizi', desc: '50/30/20 kuralı', color: 'rgba(96, 165, 250, 0.2)', iconColor: '#60a5fa' },
+  { id: 'dca', icon: '📈', label: 'Yatırım Planlayıcı', desc: 'DCA bileşik büyüme', color: 'rgba(167, 139, 250, 0.2)', iconColor: '#a78bfa' },
+  { id: 'emergency', icon: '🛡️', label: 'Acil Durum Fonu', desc: 'Finansal güvencen', color: 'rgba(239, 68, 68, 0.2)', iconColor: '#ef4444' },
   { id: 'favorites', icon: '⭐', label: 'Favoriler', desc: 'Sık kullanılan işlemler', color: 'rgba(250, 204, 21, 0.2)', iconColor: '#facc15' },
   { id: 'settings', icon: '⚙️', label: 'Ayarlar', desc: 'Uygulama tercihleri', badge: '!', color: 'rgba(236, 72, 153, 0.2)', iconColor: '#ec4899' },
 ];
@@ -30,7 +35,7 @@ const financialQuotes = [
   { text: "İyi bir yatırım portföyü, bir sabun kalıbı gibidir; ne kadar çok dokunursan o kadar küçülür.", author: "Eugene Fama" },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentView, onNavigate }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentView, onNavigate, theme, onThemeToggle }) => {
   
   const handleNavigation = (id: string) => {
     onNavigate(id);
@@ -158,8 +163,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentView, onNavig
         {/* Quick Actions Footer */}
         <div className="sidebar-footer">
           <div className="footer-actions">
-            <button className="quick-action-btn">
-              <span className="qa-icon">🌗</span>
+            <button className="quick-action-btn" onClick={onThemeToggle}>
+              <span className="qa-icon">{theme === 'dark' ? '🌞' : '🌙'}</span>
               <span>Tema</span>
             </button>
             <button className="quick-action-btn">
