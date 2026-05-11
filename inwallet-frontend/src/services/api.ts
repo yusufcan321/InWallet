@@ -107,6 +107,15 @@ export const transactionApi = {
     if (!res.ok) throw new Error('İşlem oluşturulamadı.');
     return res.json();
   },
+
+  deleteTransaction: async (id: number) => {
+    const res = await fetch(`${BASE_URL}/api/transactions/${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error('İşlem silinemedi.');
+    return true;
+  },
 };
 
 export const goalApi = {

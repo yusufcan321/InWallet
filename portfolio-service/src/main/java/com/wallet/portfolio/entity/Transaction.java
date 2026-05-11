@@ -20,7 +20,7 @@ public class Transaction {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private User user;
 
     // İşlem Türü: BUY, SELL, INCOME, EXPENSE, INVESTMENT
@@ -33,7 +33,7 @@ public class Transaction {
     // Varsa ilgili varlık (örn. Altın alındıysa o Asset'in referansı, nakit ise null)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "asset_id")
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private Asset asset;
 
     // İşlem miktarı

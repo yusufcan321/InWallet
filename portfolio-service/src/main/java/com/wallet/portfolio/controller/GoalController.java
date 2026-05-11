@@ -35,4 +35,10 @@ public class GoalController {
             return ResponseEntity.internalServerError().body("Hata: " + e.getMessage());
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteGoal(@PathVariable Long id) {
+        goalService.deleteGoal(id);
+        return ResponseEntity.ok().build();
+    }
 }

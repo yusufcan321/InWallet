@@ -29,22 +29,18 @@ public class GoalService {
             return;
         }
 
-        // Bugün ile hedef tarih arasındaki ay sayısını bul
         long monthsToGoal = ChronoUnit.MONTHS.between(LocalDateTime.now(), goal.getTargetDate());
         if (monthsToGoal <= 0) {
             goal.setCurrentTargetPrice(goal.getTargetAmount());
             return;
         }
 
-        // Yıllık enflasyonu aylık faiz gibi işleten basit model
-        // Gelecek Değer = Mevcut Değer * (1 + Enflasyon/100)^(Aylar/12)
         double inflationRate = goal.getExpectedInflationRate().doubleValue() / 100.0;
         double years = monthsToGoal / 12.0;
         
         double adjustedPrice = goal.getTargetAmount().doubleValue() * Math.pow(1 + inflationRate, years);
         goal.setCurrentTargetPrice(new BigDecimal(adjustedPrice).setScale(2, RoundingMode.HALF_UP));
 
-        // Tamamlanma yüzdesini de güncelle
         if (goal.getCurrentAmount() != null && goal.getCurrentTargetPrice().compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal percentage = goal.getCurrentAmount()
                     .multiply(new BigDecimal(100))
@@ -66,8 +62,12 @@ public class GoalService {
         }
         
         Goal saved = goalRepository.save(goal);
-        // Enflasyon hesapla
         calculateInflationAdjustment(saved);
         return saved;
+    }
+
+    @Transactional
+    public void deleteGoal(Long id) {
+        goalRepository.deleteById(id);
     }
 }

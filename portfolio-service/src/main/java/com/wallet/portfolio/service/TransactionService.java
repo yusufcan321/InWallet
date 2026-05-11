@@ -31,12 +31,16 @@ public class TransactionService {
                 transactionProducer.sendTransactionEvent(saved);
             } catch (Exception kafkaError) {
                 LOGGER.warn("Kafka event sending failed but transaction saved: {}", kafkaError.getMessage());
-                // Transaction zaten save edildi, Kafka error'u ignore et
             }
             return saved;
         } catch (Exception e) {
             LOGGER.error("Transaction save failed: {}", e.getMessage());
             throw e;
         }
+    }
+
+    @Transactional
+    public void deleteTransaction(Long id) {
+        transactionRepository.deleteById(id);
     }
 }

@@ -123,7 +123,7 @@ const AppContent: React.FC = () => {
           </div>
           <div className="user-profile">
             <div className="text-muted">Hoş Geldiniz, {username || 'Kullanıcı'}</div>
-            <div className="avatar" style={{ cursor: 'pointer' }} onClick={logout} title="Çıkış Yap">
+            <div className="avatar" style={{ cursor: 'pointer' }} onClick={() => setCurrentView('settings')} title="Profili Düzenle">
               {username ? username.slice(0, 2).toUpperCase() : 'IW'}
             </div>
           </div>

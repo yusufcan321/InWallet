@@ -96,6 +96,16 @@ const Transactions: React.FC = () => {
     });
   }, [transactions]);
 
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Bu işlemi silmek istediğinize emin misiniz?")) return;
+    try {
+      await transactionApi.deleteTransaction(id);
+      fetchTransactions();
+    } catch (err) {
+      alert("İşlem silinemedi.");
+    }
+  };
+
   const filteredTransactions = transactions.filter(tx => {
     const rawType = (tx.type || "").toUpperCase().trim();
     if (filter === 'all') return true;
@@ -121,7 +131,7 @@ const Transactions: React.FC = () => {
           <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--accent-red)', marginTop: '8px' }}>₺{stats.expense.toLocaleString()}</div>
         </div>
         <div className="glass-card" style={{ borderLeft: '4px solid var(--accent-blue)', padding: '20px' }}>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Net Tasarruf</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Nakit Bakiyesi</div>
           <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '8px' }}>₺{stats.balance.toLocaleString()}</div>
         </div>
       </div>
@@ -183,7 +193,7 @@ const Transactions: React.FC = () => {
             <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>Henüz işlem kaydı bulunmuyor.</div>
           ) : (
             filteredTransactions.map(tx => (
-              <div key={tx.id} className="transaction-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div key={tx.id} className="transaction-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div style={{ 
                     width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -199,8 +209,11 @@ const Transactions: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div style={{ fontSize: '16px', fontWeight: 800, color: tx.type?.toLowerCase() === 'income' ? 'var(--accent-green)' : 'var(--text-primary)' }}>
-                  {tx.type?.toLowerCase() === 'income' ? '+' : '-'} ₺{Number(tx.amount || 0).toLocaleString()}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: tx.type?.toLowerCase() === 'income' ? 'var(--accent-green)' : 'var(--text-primary)' }}>
+                    {tx.type?.toLowerCase() === 'income' ? '+' : '-'} ₺{Number(tx.amount || 0).toLocaleString()}
+                  </div>
+                  <button onClick={() => handleDelete(tx.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '18px', opacity: 0.5 }}>🗑️</button>
                 </div>
               </div>
             ))

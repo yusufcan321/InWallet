@@ -36,4 +36,10 @@ public class TransactionController {
             return ResponseEntity.internalServerError().body("Hata: " + e.getMessage());
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTransaction(@PathVariable Long id) {
+        transactionService.deleteTransaction(id);
+        return ResponseEntity.ok().build();
+    }
 }
