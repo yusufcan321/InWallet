@@ -46,10 +46,15 @@ public class JwtUtil {
     }
 
     private Claims parseClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        try {
+            return Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (Exception e) {
+            System.out.println("JWT PARSE HATASI: " + e.getMessage());
+            throw e;
+        }
     }
 }

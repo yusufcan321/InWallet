@@ -18,6 +18,9 @@ const FinancialGoalsModal: React.FC<FinancialGoalsModalProps> = ({ isOpen, onClo
   useEffect(() => {
     if (isOpen && userId) {
       fetchGoals();
+      // Modal açıkken her 5 saniyede yenile
+      const interval = setInterval(() => fetchGoals(), 5000);
+      return () => clearInterval(interval);
     }
   }, [isOpen, userId]);
 
@@ -47,14 +50,25 @@ const FinancialGoalsModal: React.FC<FinancialGoalsModalProps> = ({ isOpen, onClo
     };
 
     try {
+      setLoading(true);
       await goalApi.createGoal(goalData);
       setNewGoalTitle('');
       setNewGoalTarget('');
-      fetchGoals(); // Listeyi yenile
-    } catch (error) {
-      alert('Hedef eklenirken hata oluştu.');
-    } finally {
+      
+      // Hedef başarıyla eklendi - hemen listeyi yenile
+      setTimeout(async () => {
+        await fetchGoals(); // Modal listeyi güncelle
+        alert('Hedef başarıyla eklendi!');
+        
+        // 500ms sonra modal'ı kapat (Dashboard'daki handleModalClose() trigger olur)
+        setTimeout(() => {
+          onClose();
+        }, 500);
+      }, 300);
+    } catch (error: any) {
+      console.error('Hedef eklenirken hata:', error);
       setLoading(false);
+      alert('Hedef eklenirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
     }
   };
 
@@ -69,13 +83,14 @@ const FinancialGoalsModal: React.FC<FinancialGoalsModalProps> = ({ isOpen, onClo
         <div className="modal-body">
           <div className="goals-list">
             {goals.length > 0 ? goals.map(goal => {
-              const progress = ((goal.currentAmount || 0) / (goal.targetAmount || 1)) * 100;
+              // currentTargetPrice kullanıyoruz (enflasyon-adjusted değer), fallback olarak targetAmount
+              const progress = ((goal.currentAmount || 0) / (goal.currentTargetPrice || goal.targetAmount || 1)) * 100;
               return (
                 <div key={goal.id} className="goal-item">
                   <div className="goal-info">
                     <h4>{goal.name}</h4>
                     <span className="goal-stats">
-                      ₺{(goal.currentAmount || 0).toLocaleString()} / ₺{(goal.targetAmount || 0).toLocaleString()}
+                      ₺{(goal.currentAmount || 0).toLocaleString()} / ₺{(goal.currentTargetPrice || goal.targetAmount || 0).toLocaleString()}
                     </span>
                   </div>
                   <div className="goal-progress-bar">

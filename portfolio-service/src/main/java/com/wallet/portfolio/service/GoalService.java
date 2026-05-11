@@ -4,6 +4,7 @@ import com.wallet.portfolio.entity.Goal;
 import com.wallet.portfolio.repository.GoalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -52,7 +53,21 @@ public class GoalService {
         }
     }
 
+    @Transactional
     public Goal createGoal(Goal goal) {
-        return goalRepository.save(goal);
+        if (goal.getTargetAmount() == null || goal.getTargetAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Hedef tutarı 0'dan büyük olmalıdır.");
+        }
+        if (goal.getName() == null || goal.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Hedef adı boş olamaz.");
+        }
+        if (goal.getTargetDate() == null) {
+            throw new IllegalArgumentException("Hedef tarihi belirtilmelidir.");
+        }
+        
+        Goal saved = goalRepository.save(goal);
+        // Enflasyon hesapla
+        calculateInflationAdjustment(saved);
+        return saved;
     }
 }

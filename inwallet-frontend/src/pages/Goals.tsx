@@ -17,19 +17,19 @@ const Goals: React.FC = () => {
     if (!userId) return;
     setLoading(true);
     try {
-      // Hedefleri çek
-      const gData = await goalApi.getGoals(userId);
-      setGoalsList(gData);
+      const uId = Number(userId);
+      console.log("Hedefler ve kullanıcı verisi isteniyor. UserID:", uId);
       
-      // Kullanıcı verisini çek (ayrıca, hata alsa da hedefleri bozmasın)
-      try {
-        const uData = await userApi.getMe(userId);
-        setUserData(uData);
-      } catch (uErr) {
-        console.warn("Kullanıcı profili yüklenemedi, hesaplamalar kısıtlı olabilir.");
-      }
+      const [gData, uData] = await Promise.all([
+        goalApi.getGoals(uId).catch(() => []),
+        userApi.getMe(uId).catch(() => null)
+      ]);
+      
+      console.log("Gelen Hedefler:", gData);
+      setGoalsList(Array.isArray(gData) ? gData : []);
+      setUserData(uData);
     } catch (err) {
-      console.error("Hedefler yüklenemedi:", err);
+      console.error("Veri yükleme hatası:", err);
     } finally {
       setLoading(false);
     }
@@ -45,26 +45,34 @@ const Goals: React.FC = () => {
     e.preventDefault();
     if (!userId) return;
     
+    // Tarih formatını backend'in LocalDateTime (YYYY-MM-DDTHH:mm:ss) formatına uyarla
+    const formattedDate = newGoalDate ? `${newGoalDate}T00:00:00` : new Date().toISOString().split('.')[0];
+
     const goalData = {
       name: newGoalTitle,
       initialPrice: Number(newGoalTarget),
       targetAmount: Number(newGoalTarget),
       currentAmount: 0,
       expectedInflationRate: Number(newGoalInflation),
-      targetDate: newGoalDate + "T00:00:00",
-      user: { id: Number(userId) } // Ensure ID is a number
+      targetDate: formattedDate,
+      user: { id: Number(userId) }
     };
 
     try {
-      console.log("Hedef oluşturuluyor:", goalData);
-      await goalApi.createGoal(goalData);
+      console.log("Hedef Kayıt İsteği:", goalData);
+      const res = await goalApi.createGoal(goalData);
+      console.log("Hedef Kayıt Başarılı:", res);
+      
       setNewGoalTitle('');
       setNewGoalTarget('');
       setNewGoalDate('');
-      fetchGoalsAndUser(); // Listeyi yenile
-    } catch (err) {
-      console.error("Hedef oluşturma hatası:", err);
-      alert("Hedef oluşturulurken hata oluştu. Lütfen tüm alanları kontrol edin.");
+      
+      // Kayıt sonrası listeyi zorla yenile
+      await fetchGoalsAndUser();
+      alert("Hedef başarıyla eklendi!");
+    } catch (err: any) {
+      console.error("Hedef kayıt hatası:", err);
+      alert(`Hedef oluşturulamadı: ${err.message || 'Bilinmeyen hata'}`);
     }
   };
 
@@ -83,8 +91,14 @@ const Goals: React.FC = () => {
   return (
     <div className="dashboard-grid">
       <div className="col-span-8 glass-card">
-        <div className="card-header">
+        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span className="card-title" style={{ fontSize: '24px' }}>Tüm Hedeflerim</span>
+          <button 
+            onClick={fetchGoalsAndUser}
+            style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', color: 'var(--accent-blue)', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
+          >
+            🔄 Yenile
+          </button>
         </div>
         
         <div className="goals-list" style={{ marginTop: '20px' }}>
@@ -115,10 +129,10 @@ const Goals: React.FC = () => {
                   </div>
                   <div style={{ textAlign: 'right', marginRight: '30px' }}>
                     <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                      ₺{currentAmount.toLocaleString()}
+                      ₺{Number(goal.currentAmount || 0).toLocaleString()}
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                      Hedef: ₺{targetAmount.toLocaleString()}
+                      Hedef: ₺{Number(goal.currentTargetPrice || goal.targetAmount || 0).toLocaleString()}
                     </div>
                   </div>
                 </div>

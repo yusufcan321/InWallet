@@ -19,7 +19,19 @@ public class TransactionProducer {
     }
 
     public void sendTransactionEvent(Transaction transaction) {
-        LOGGER.info(String.format("Kafka'ya islem gonderiliyor -> %s", transaction.toString()));
-        kafkaTemplate.send(TOPIC, transaction);
+        try {
+            LOGGER.info("Kafka'ya islem gonderiliyor -> {}", transaction.getId());
+            var sendResult = kafkaTemplate.send(TOPIC, transaction.getId().toString(), transaction);
+            sendResult.whenComplete((result, ex) -> {
+                if (ex != null) {
+                    LOGGER.error("Kafka event gonderimi basarısız: {}", ex.getMessage());
+                } else {
+                    LOGGER.info("Kafka event başarıyla gönderildi: {}", transaction.getId());
+                }
+            });
+        } catch (Exception e) {
+            LOGGER.error("Kafka send hatası: {}", e.getMessage());
+            throw e;
+        }
     }
 }

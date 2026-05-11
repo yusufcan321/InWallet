@@ -9,18 +9,30 @@ const COLORS = ['#00d2ff', '#f59e0b', '#8b5cf6', '#10b981', '#3b82f6'];
 
 const Dashboard: React.FC = () => {
   const { userId } = useAuth();
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [isGoalsModalOpen, setIsGoalsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+  
   const [scheduledModalType, setScheduledModalType] = useState<'debt' | 'receivable' | null>(null);
   
   const [assets, setAssets] = useState<any[]>([]);
   const [goals, setGoals] = useState<any[]>([]);
   const [userData, setUserData] = useState<any>(null);
   const [marketPrices, setMarketPrices] = useState<any>({});
-  const [loading, setLoading] = useState(true);
 
   const [refreshKey, setRefreshKey] = useState(0);
-  const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
-  const [isSavingsModalOpen, setIsSavingsModalOpen] = useState(false);
 
   const getProgressColor = (percent: number) => {
     if (percent >= 80) return 'var(--accent-green)';
@@ -34,10 +46,10 @@ const Dashboard: React.FC = () => {
     const fetchData = async () => {
       try {
         const [assetData, goalData, profileData, priceData] = await Promise.all([
-          assetApi.getAssets(userId),
-          goalApi.getGoals(userId),
-          userApi.getMe(userId),
-          marketApi.getPrices()
+          assetApi.getAssets(userId).catch(err => { console.error("Assets load failed:", err); return []; }),
+          goalApi.getGoals(userId).catch(err => { console.error("Goals load failed:", err); return []; }),
+          userApi.getMe(userId).catch(err => { console.error("Profile load failed:", err); return null; }),
+          marketApi.getPrices().catch(err => { console.error("Market prices load failed:", err); return {}; })
         ]);
         setAssets(assetData);
         setGoals(goalData);
@@ -45,8 +57,6 @@ const Dashboard: React.FC = () => {
         setMarketPrices(priceData);
       } catch (error) {
         console.error('Veri çekme hatası:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -58,7 +68,7 @@ const Dashboard: React.FC = () => {
   // Varlıkları grafiğe uygun formata dönüştür
   const portfolioData = assets.reduce((acc: any[], asset) => {
     const existing = acc.find(item => item.name === asset.type);
-    const value = (asset.quantity || 0) * (asset.currentPrice || asset.averageBuyPrice || 0);
+    const value = (Number(asset.quantity) || 0) * (Number(asset.currentPrice || asset.averageBuyPrice) || 0);
     
     if (existing) {
       existing.value += value;
@@ -76,81 +86,167 @@ const Dashboard: React.FC = () => {
 
   const handleModalClose = () => {
     setIsGoalsModalOpen(false);
-    setIsEmergencyModalOpen(false);
-    setIsSavingsModalOpen(false);
     setScheduledModalType(null);
     setRefreshKey(prev => prev + 1); // Verileri yenile
   };
 
-  const emergencyFundMonthlyExpense = userData?.monthlyExpense || 0;
-  const emergencyFundCurrent = assets
-    .filter(a => a.type.toLowerCase().includes('nakit') || a.type.toLowerCase().includes('mevduat'))
-    .reduce((sum, a) => sum + (a.quantity * (a.currentPrice || a.averageBuyPrice || 0)), 0);
-  
-  const emergencyFundTarget = emergencyFundMonthlyExpense * 6;
-  const emergencyFundMonths = emergencyFundMonthlyExpense > 0 ? +(emergencyFundCurrent / emergencyFundMonthlyExpense).toFixed(1) : 0;
-  const emergencyFundPercent = emergencyFundTarget > 0 ? Math.min(100, Math.round((emergencyFundCurrent / emergencyFundTarget) * 100)) : 0;
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [tempIncome, setTempIncome] = useState('');
+  const [tempExpense, setTempExpense] = useState('');
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId) return;
+    try {
+      await userApi.updateMe(Number(userId), {
+        monthlyIncome: Number(tempIncome),
+        monthlyExpense: Number(tempExpense)
+      });
+      setIsProfileModalOpen(false);
+      setRefreshKey(prev => prev + 1);
+      alert("Profil başarıyla güncellendi!");
+    } catch (err) {
+      alert("Profil güncellenemedi.");
+    }
+  };
 
   return (
     <div className="dashboard-grid">
       
-      {/* Top Stats Section */}
+      {/* Date & Time Header */}
+      <div className="col-span-12" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', padding: '0 10px' }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 800 }} className="heading-gradient">Hoş Geldin, {userData?.username || 'Kullanıcı'}</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+            <p style={{ color: 'var(--text-secondary)', margin: 0 }}>{formatDate(currentTime)}</p>
+            <button 
+              onClick={() => {
+                setTempIncome(userData?.monthlyIncome?.toString() || '');
+                setTempExpense(userData?.monthlyExpense?.toString() || '');
+                setIsProfileModalOpen(true);
+              }}
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}
+            >
+              ⚙️ Profili Düzenle
+            </button>
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '32px', fontWeight: 'bold', fontFamily: 'monospace', color: 'var(--accent-blue)' }}>{formatTime(currentTime)}</div>
+        </div>
+      </div>
+
+      {/* Profile Modal */}
+      {isProfileModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '20px' }}>
+          <div className="glass-card animate-slide-up" style={{ width: '100%', maxWidth: '400px', padding: '32px' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '20px' }}>Profil Ayarları</h3>
+            <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '13px' }}>Sabit Aylık Gelir (₺)</label>
+                <input type="number" value={tempIncome} onChange={e => setTempIncome(e.target.value)} placeholder="Örn: 45000" required />
+              </div>
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '13px' }}>Tahmini Aylık Gider (₺)</label>
+                <input type="number" value={tempExpense} onChange={e => setTempExpense(e.target.value)} placeholder="Örn: 25000" required />
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                <button type="button" onClick={() => setIsProfileModalOpen(false)} style={{ flex: 1, padding: '12px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', cursor: 'pointer' }}>Vazgeç</button>
+                <button type="submit" className="btn-primary" style={{ flex: 1, padding: '12px', borderRadius: '10px', fontWeight: 700 }}>Güncelle</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Top Stats Section - Enhanced */}
       <div className="col-span-12">
-        <div className="dashboard-grid">
-          <div className="col-span-3 glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div className="dashboard-grid" style={{ gap: '16px', marginBottom: '8px' }}>
+          <div className="col-span-4 glass-card" style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%)', borderLeft: '3px solid #3b82f6' }}>
             <div className="card-header">
-              <span className="card-title">Toplam Net Varlık</span>
+              <span className="card-title" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>📊 Toplam Net Varlık</span>
             </div>
-            <div className="stat-value heading-gradient sensitive-data">
-              ₺{totalNetWorth.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            <div className="stat-value heading-gradient sensitive-data" style={{ fontSize: '28px', marginTop: '8px' }}>
+              ₺{Number(totalNetWorth || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </div>
+            <div className="stat-label text-muted" style={{ fontSize: '12px', marginTop: '8px' }}>Tüm hesaplar & yatırımlar</div>
           </div>
           
-          <div className="col-span-3 glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div className="card-header">
-              <span className="card-title" style={{ fontSize: '14px' }}>Aylık Gelir</span>
+          <div className="col-span-4 glass-card" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%)', borderLeft: '3px solid var(--accent-green)' }}>
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="card-title" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>💰 Aylık Gelir</span>
+              <button 
+                onClick={() => setScheduledModalType('receivable')}
+                style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.3)', color: 'var(--accent-green)', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700 }}
+              >+</button>
             </div>
-            <div className="stat-value sensitive-data">₺{(userData?.monthlyIncome || 0).toLocaleString()}</div>
-            <div className="stat-label text-muted">Sabit Gelir</div>
+            <div className="stat-value sensitive-data" style={{ color: 'var(--accent-green)', fontSize: '26px', marginTop: '8px' }}>₺{Number(userData?.monthlyIncome || 0).toLocaleString()}</div>
+            <div className="stat-label text-muted" style={{ fontSize: '12px', marginTop: '8px' }}>Sabit Aylık Gelir</div>
           </div>
 
-          <div className="col-span-3 glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-            <div className="card-header">
-              <span className="card-title" style={{ fontSize: '14px' }}>Aylık Gider</span>
+          <div className="col-span-4 glass-card" style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%)', borderLeft: '3px solid #ef4444' }}>
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="card-title" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>💸 Aylık Gider</span>
+              <button 
+                onClick={() => setScheduledModalType('debt')}
+                style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700 }}
+              >+</button>
             </div>
-            <div className="stat-value sensitive-data" style={{ fontSize: '24px' }}>₺{(userData?.monthlyExpense || 0).toLocaleString()}</div>
-            <div className="stat-label text-danger" style={{ fontSize: '12px' }}>Tahmini Giderler</div>
-            
-            {/* Anomali Tespiti (Vision Item #3) */}
-            {(userData?.monthlyExpense > 0) && (
-              <div style={{ position: 'absolute', top: '10px', right: '10px', animation: 'pulse 2s infinite' }}>
-                <span title="Anomali Tespiti yayında!" style={{ cursor: 'help' }}>🛡️</span>
-              </div>
-            )}
+            <div className="stat-value sensitive-data" style={{ fontSize: '26px', marginTop: '8px', color: '#ef4444' }}>₺{Number(userData?.monthlyExpense || 0).toLocaleString()}</div>
+            <div className="stat-label text-muted" style={{ fontSize: '12px', marginTop: '8px' }}>Tahmini Aylık Giderler</div>
           </div>
+        </div>
+      </div>
 
-          {/* Tasarruf Hızı */}
-          <div className="col-span-3 glass-card interactive-card" onClick={() => setIsSavingsModalOpen(true)} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'linear-gradient(145deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.02) 100%)', border: '1px solid rgba(16, 185, 129, 0.2)', cursor: 'pointer', transition: 'all 0.3s ease' }}>
-            <div className="card-header" style={{ marginBottom: '8px' }}>
-              <span className="card-title" style={{ fontSize: '14px', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
-                Tasarruf Hızı
-              </span>
-            </div>
-            {userData?.monthlyIncome > 0 ? (
-              <>
-                <div className="stat-value sensitive-data" style={{ fontSize: '28px', color: 'var(--accent-green)' }}>
-                  %{Math.max(0, Math.round(((userData.monthlyIncome - userData.monthlyExpense) / userData.monthlyIncome) * 100))}
-                </div>
-                <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden', marginTop: '8px', marginBottom: '6px' }}>
-                  <div style={{ width: `${Math.max(0, Math.round(((userData.monthlyIncome - userData.monthlyExpense) / userData.monthlyIncome) * 100))}%`, height: '100%', background: 'var(--accent-green)', borderRadius: '3px' }}></div>
-                </div>
-                <div className="stat-label text-muted" style={{ fontSize: '11px' }}>₺{Math.max(0, userData.monthlyIncome - userData.monthlyExpense).toLocaleString()} Tasarruf / Ay</div>
-              </>
-            ) : (
-              <div className="stat-label text-muted">Profil verisi bekleniyor</div>
-            )}
-          </div>
+      {/* Quick Actions Row */}
+      <div className="col-span-12" style={{ marginBottom: '8px' }}>
+        <div className="dashboard-grid" style={{ gap: '12px' }}>
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: 'transactions' }))}
+            className="col-span-6" 
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              padding: '16px',
+              borderRadius: '12px',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              fontWeight: 600,
+              fontSize: '14px',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.8)'}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)'}
+          >
+            <span>💸</span> Yeni İşlem Ekle
+          </button>
+          <button 
+            onClick={() => setIsGoalsModalOpen(true)}
+            className="col-span-6"
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              padding: '16px',
+              borderRadius: '12px',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              fontWeight: 600,
+              fontSize: '14px',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.8)'}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.3)'}
+          >
+            <span>🎯</span> Yeni Hedef Oluştur
+          </button>
         </div>
       </div>
 
@@ -238,30 +334,7 @@ const Dashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Acil Durum Fonu Mini Widget */}
-        <div 
-          onClick={() => setIsEmergencyModalOpen(true)}
-          style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid var(--border-color)', cursor: 'pointer' }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: emergencyFundPercent < 50 ? '#ef4444' : 'var(--accent-green)' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-              Acil Durum Fonu
-            </span>
-            <span style={{ fontSize: '11px', background: emergencyFundPercent < 50 ? 'rgba(239,68,68,0.1)' : 'rgba(16, 185, 129, 0.1)', color: emergencyFundPercent < 50 ? '#ef4444' : 'var(--accent-green)', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
-              {emergencyFundPercent < 50 ? '⚠️ Düşük' : '✅ Güvende'}
-            </span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>{emergencyFundMonths} / 6 ay karşılandı</span>
-            <span style={{ color: emergencyFundPercent < 50 ? '#ef4444' : 'var(--accent-green)', fontWeight: 700 }}>%{emergencyFundPercent}</span>
-          </div>
-          <div style={{ width: '100%', height: '6px', background: 'var(--bg-primary)', borderRadius: '3px', overflow: 'hidden' }}>
-            <div style={{ width: `${emergencyFundPercent}%`, height: '100%', background: emergencyFundPercent < 50 ? '#ef4444' : 'var(--accent-green)', borderRadius: '3px' }}></div>
-          </div>
-        </div>
+        {/* Acil Durum Fonu Mini Widget - REMOVED */}
 
         {/* Canlı Piyasa İzleme (Vision Item #2) */}
         <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border-color)' }}>
