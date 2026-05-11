@@ -22,7 +22,24 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<Transaction> createTransaction(@RequestBody Transaction transaction) {
-        return ResponseEntity.ok(transactionService.createTransaction(transaction));
+    public ResponseEntity<?> createTransaction(@RequestBody Transaction transaction) {
+        try {
+            if (transaction.getAmount() == null || transaction.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                return ResponseEntity.badRequest().body("İşlem tutarı 0'dan büyük olmalıdır.");
+            }
+            if (transaction.getUser() == null || transaction.getUser().getId() == null) {
+                return ResponseEntity.badRequest().body("Kullanıcı bilgisi eksiktir.");
+            }
+            Transaction created = transactionService.createTransaction(transaction);
+            return ResponseEntity.ok(created);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Hata: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTransaction(@PathVariable Long id) {
+        transactionService.deleteTransaction(id);
+        return ResponseEntity.ok().build();
     }
 }

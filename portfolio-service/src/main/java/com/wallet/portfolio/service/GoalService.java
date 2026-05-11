@@ -4,6 +4,7 @@ import com.wallet.portfolio.entity.Goal;
 import com.wallet.portfolio.repository.GoalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -28,22 +29,18 @@ public class GoalService {
             return;
         }
 
-        // Bugün ile hedef tarih arasındaki ay sayısını bul
         long monthsToGoal = ChronoUnit.MONTHS.between(LocalDateTime.now(), goal.getTargetDate());
         if (monthsToGoal <= 0) {
             goal.setCurrentTargetPrice(goal.getTargetAmount());
             return;
         }
 
-        // Yıllık enflasyonu aylık faiz gibi işleten basit model
-        // Gelecek Değer = Mevcut Değer * (1 + Enflasyon/100)^(Aylar/12)
         double inflationRate = goal.getExpectedInflationRate().doubleValue() / 100.0;
         double years = monthsToGoal / 12.0;
         
         double adjustedPrice = goal.getTargetAmount().doubleValue() * Math.pow(1 + inflationRate, years);
         goal.setCurrentTargetPrice(new BigDecimal(adjustedPrice).setScale(2, RoundingMode.HALF_UP));
 
-        // Tamamlanma yüzdesini de güncelle
         if (goal.getCurrentAmount() != null && goal.getCurrentTargetPrice().compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal percentage = goal.getCurrentAmount()
                     .multiply(new BigDecimal(100))
@@ -52,7 +49,25 @@ public class GoalService {
         }
     }
 
+    @Transactional
     public Goal createGoal(Goal goal) {
-        return goalRepository.save(goal);
+        if (goal.getTargetAmount() == null || goal.getTargetAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Hedef tutarı 0'dan büyük olmalıdır.");
+        }
+        if (goal.getName() == null || goal.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Hedef adı boş olamaz.");
+        }
+        if (goal.getTargetDate() == null) {
+            throw new IllegalArgumentException("Hedef tarihi belirtilmelidir.");
+        }
+        
+        Goal saved = goalRepository.save(goal);
+        calculateInflationAdjustment(saved);
+        return saved;
+    }
+
+    @Transactional
+    public void deleteGoal(Long id) {
+        goalRepository.deleteById(id);
     }
 }

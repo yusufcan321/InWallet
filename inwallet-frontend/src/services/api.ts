@@ -8,10 +8,15 @@ export const setToken = (token: string) => localStorage.setItem('inwallet_token'
 export const removeToken = () => localStorage.removeItem('inwallet_token');
 
 // Yetkilendirilmiş HTTP başlıkları
-const authHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${getToken()}`,
-});
+const authHeaders = (isPost = true) => {
+  const headers: any = {
+    Authorization: `Bearer ${getToken()}`,
+  };
+  if (isPost) {
+    headers['Content-Type'] = 'application/json';
+  }
+  return headers;
+};
 
 // ─── Auth Endpoints ────────────────────────────────────
 export const authApi = {
@@ -43,15 +48,25 @@ export const authApi = {
 // ─── User / Portfolio Endpoints ─────────────────────────
 export const userApi = {
   getMe: async (userId: number) => {
-    const res = await fetch(`${BASE_URL}/api/users/${userId}`, { headers: authHeaders() });
+    const res = await fetch(`${BASE_URL}/api/users/${userId}`, { headers: authHeaders(false) });
     if (!res.ok) throw new Error('Kullanıcı bilgileri alınamadı.');
+    return res.json();
+  },
+  
+  updateMe: async (userId: number, userData: object) => {
+    const res = await fetch(`${BASE_URL}/api/users/${userId}`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify(userData),
+    });
+    if (!res.ok) throw new Error('Kullanıcı bilgileri güncellenemedi.');
     return res.json();
   },
 };
 
 export const assetApi = {
   getAssets: async (userId: number) => {
-    const res = await fetch(`${BASE_URL}/api/assets/user/${userId}`, { headers: authHeaders() });
+    const res = await fetch(`${BASE_URL}/api/assets/user/${userId}`, { headers: authHeaders(false) });
     if (!res.ok) throw new Error('Varlık bilgileri alınamadı.');
     return res.json();
   },
@@ -78,7 +93,7 @@ export const assetApi = {
 
 export const transactionApi = {
   getTransactions: async (userId: number) => {
-    const res = await fetch(`${BASE_URL}/api/transactions/user/${userId}`, { headers: authHeaders() });
+    const res = await fetch(`${BASE_URL}/api/transactions/user/${userId}`, { headers: authHeaders(false) });
     if (!res.ok) throw new Error('İşlem geçmişi alınamadı.');
     return res.json();
   },
@@ -92,11 +107,20 @@ export const transactionApi = {
     if (!res.ok) throw new Error('İşlem oluşturulamadı.');
     return res.json();
   },
+
+  deleteTransaction: async (id: number) => {
+    const res = await fetch(`${BASE_URL}/api/transactions/${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error('İşlem silinemedi.');
+    return true;
+  },
 };
 
 export const goalApi = {
   getGoals: async (userId: number) => {
-    const res = await fetch(`${BASE_URL}/api/goals/user/${userId}`, { headers: authHeaders() });
+    const res = await fetch(`${BASE_URL}/api/goals/user/${userId}`, { headers: authHeaders(false) });
     if (!res.ok) throw new Error('Hedefler alınamadı.');
     return res.json();
   },

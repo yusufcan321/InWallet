@@ -78,12 +78,12 @@ const AIChatWidget: React.FC = () => {
           </div>
           
           <div className="ai-chat-messages">
-            {messages.map((msg) => (
-              <div key={msg.id} className={`chat-message-container ${msg.sender}`}>
+            {messages.map((msg, idx) => (
+              <div key={idx} className={`chat-message-container ${msg.sender}`}>
                 <div className={`chat-bubble ${msg.sender}`}>
                   <p>{msg.text}</p>
                 </div>
-                <span className="chat-time">{msg.time}</span>
+                <span className="chat-time">{new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             ))}
             {isLoading && (

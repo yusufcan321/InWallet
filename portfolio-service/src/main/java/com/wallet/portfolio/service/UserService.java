@@ -19,14 +19,26 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    public User createUser(User user) {
+        return userRepository.save(user);
+    }
+
     @Cacheable(value = "users", key = "#id")
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    @CacheEvict(value = "users", allEntries = true)
-    public User createUser(User user) {
-        return userRepository.save(user);
+    @CacheEvict(value = "users", key = "#id")
+    public User updateUser(Long id, User updatedUser) {
+        User existingUser = getUserById(id);
+        if (updatedUser.getMonthlyIncome() != null) {
+            existingUser.setMonthlyIncome(updatedUser.getMonthlyIncome());
+        }
+        if (updatedUser.getMonthlyExpense() != null) {
+            existingUser.setMonthlyExpense(updatedUser.getMonthlyExpense());
+        }
+        // Diğer alanlar da eklenebilir
+        return userRepository.save(existingUser);
     }
 }
