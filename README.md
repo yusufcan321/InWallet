@@ -2,7 +2,7 @@
 
 InWallet, **Hackathon'26** "Finans Temalı AI Uygulamaları" kategorisi için geliştirilmiş, üretken yapay zeka (GenAI) destekli akıllı bir kişisel finans ve portföy yönetim sistemidir. 
 
-Sıradan bir cüzdan uygulamasından farklı olarak, InWallet kullanıcının gelirini, giderlerini ve yatırım hedeflerini (ev, araba vb.) anlık enflasyon ve piyasa verileriyle (Altın, Borsa, Kripto) analiz eder. İçerisinde barındırdığı **Agentic AI** yapısı sayesinde kullanıcının veritabanındaki portföyünü otonom olarak sorgulayabilir ve kişiselleştirilmiş finansal tavsiyeler verebilir.
+Sıradan bir cüzdan uygulamasından farklı olarak, InWallet kullanıcının gelirini, giderlerini ve yatırım hedeflerini anlık enflasyon ve piyasa verileriyle (Altın, Borsa, Kripto) analiz eder. İçerisinde barındırdığı **Agentic AI** yapısı sayesinde kullanıcının veritabanındaki portföyünü otonom olarak sorgulayabilir ve kişiselleştirilmiş finansal tavsiyeler verebilir.
 
 ---
 
@@ -16,69 +16,81 @@ InWallet, yüksek ölçeklenebilirlik, performans ve yapay zeka entegrasyonu (Ag
 - **Veritabanı:** PostgreSQL (Kullanıcı, Hedef, Varlık ve İşlem verileri)
 - **Önbellekleme:** Redis (Piyasa verilerinin hızlı okunması)
 - **Olay Güdümlü Mimari (Event-Driven):** Apache Kafka & Zookeeper
-- **Loglama ve RAG Verisi:** Elasticsearch
 - **Konteynerleştirme:** Docker & Docker Compose
-- **Frontend (Geliştirme Aşamasında):** ReactJS, TypeScript
+- **Frontend:** ReactJS, TypeScript (Vite)
 
 ### Temel Özellikler
-1. **Dinamik Portföy Yönetimi:** Altın, Hisse Senedi ve Kripto gibi varlıkların canlı simüle edilen veriler üzerinden kar/zarar hesabı.
-2. **AI Function Calling (Agentic Yapı):** Sistemdeki yapay zeka, doğrudan Java fonksiyonlarını (örn: `getUserPortfolio`) tetikleyerek kullanıcının verilerine erişebilir ve bağlamsal (RAG) cevaplar üretebilir.
-3. **Akıllı Hedefler:** Belirlenen hedeflerin tahmini enflasyon oranlarıyla güncellenmesi.
+1. **Dinamik Portföy Yönetimi:** Altın, Hisse Senedi ve Kripto gibi varlıkların canlı veriler üzerinden kar/zarar hesabı.
+2. **AI Function Calling:** Yapay zeka, Java fonksiyonlarını (örn: `getUserPortfolio`) tetikleyerek gerçek zamanlı analiz yapabilir.
+3. **Akıllı Hedefler:** Tahmini enflasyon oranlarıyla güncellenen dinamik hedef takibi.
 
 ---
 
-## 💻 Projeyi Yerel Ortamda Çalıştırma (Kurulum)
+## 🚀 Hızlı Kurulum Rehberi (Docker)
 
-Ekip arkadaşlarının ve jürinin projeyi ayağa kaldırması için aşağıdaki adımları izlemesi gerekmektedir.
+Takım arkadaşlarının ve jürinin projeyi sorunsuz ayağa kaldırması için en güvenilir yöntem Docker kullanımıdır.
 
-### Gereksinimler
-- Java 17+
-- Maven
-- Docker ve Docker Compose
-- Geçerli bir OpenAI veya Google Gemini API Key.
-
-### 1. Servisleri Ayağa Kaldırma (Altyapı)
-Veritabanı, Redis, Kafka ve Elasticsearch'ü çalıştırmak için ana dizindeki docker dosyasını kullanın:
+### 1. API Anahtarlarını Ayarlama
+Ana dizinde bir `.env` dosyası oluşturun ve içine anahtarlarınızı ekleyin (Bkz: `.env.example`):
 ```bash
-docker-compose up -d
+OPENAI_API_KEY=your_key_here
+GOOGLE_GEMINI_API_KEY=your_key_here
 ```
 
-### 2. Spring Boot Uygulamasını Başlatma
-`application.yml` veya ortam değişkenleri (Environment Variables) üzerinden `OPENAI_API_KEY` tanımını yaptıktan sonra projeyi başlatın:
+### 2. Sistemi Başlatma
+Terminalden ana dizinde şu komutu çalıştırın:
 ```bash
-cd inwallet-service
-./mvnw spring-boot:run
+docker compose up --build -d
 ```
+
+### 3. Erişim Adresleri
+- **Frontend:** [http://localhost:5173](http://localhost:5173)
+- **Backend API:** [http://localhost:8080](http://localhost:8080)
+- **Swagger UI:** [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 
 ---
 
-## 🤝 Takım Arkadaşları İçin Katkı Sağlama Rehberi (Contributing)
+## 📚 API Dokümantasyonu (Swagger & Postman)
 
-Bu proje Hackathon'26 için geliştirilmektedir. Birlikte daha hızlı ve çakışma (conflict) olmadan çalışabilmek için lütfen aşağıdaki kurallara uyalım:
+### 1. Canlı Swagger Arayüzü
+Uygulama çalışırken etkileşimli dokümantasyona buradan erişebilirsiniz: [Swagger UI](http://localhost:8080/swagger-ui/index.html)
 
-### 1. Branch (Dal) Stratejisi
-*   Ana dalımız (production) her zaman **`main`** dalıdır ve buraya doğrudan kod yazmak/pushlamak **yasaktır**.
-*   Geliştirme yaparken kendi adınıza veya özelliğe göre bir dal açın:
-    *   Özellik eklerken: `feature/ai-chat-ui` veya `feature/auth-service`
-    *   Hata çözerken: `bugfix/redis-connection`
+### 2. Postman Koleksiyonu
+Kök dizinde bulunan `openapi.json` dosyasını Postman'e "Import" ederek tüm API koleksiyonuna erişebilirsiniz.
+
+---
+
+## 🆘 Olası Hatalar ve Çözümleri (Troubleshooting)
+
+- **Port Çakışması (8080/5173):** Başka bir uygulamanın bu portları kullanmadığından emin olun veya `docker compose down` yapıp tekrar deneyin.
+- **Veritabanı Bağlantı Hatası:** Konteynerlerin tam hazır olması için 10-15 saniye bekleyin. Sorun devam ederse `docker compose down -v` ile volume'leri temizleyip tekrar başlatın.
+- **AI Yanıt Vermiyor:** `.env` dosyasındaki API anahtarlarınızın geçerli olduğunu kontrol edin.
+
+---
+
+## 🤝 Takım Arkadaşları İçin Çalışma Rehberi
+
+Ekibimizin beraber sorunsuz çalışabilmesi için lütfen şu kurallara dikkat edelim:
+
+### 1. Git İş Akışı ve Güncel Kalma
+Her sabah ana depodaki değişiklikleri kendi bilgisayarınıza çekmeyi unutmayın:
 ```bash
-git checkout -b feature/kendi-ozelliginiz
+git checkout main
+git pull upstream main  # Ana depodan güncel kodu al
+git push origin main    # Kendi fork'unu güncelle
 ```
 
-### 2. Commit Mesajı Standartları (Conventional Commits)
-Lütfen commit mesajlarınızın başına yapılan işin türünü ekleyin (İngilizce tercih edilir):
-*   `feat:` Yeni bir özellik (örn: `feat: add goal calculation endpoint`)
-*   `fix:` Bir hata düzeltmesi (örn: `fix: resolve database connection timeout`)
-*   `refactor:` Kod iyileştirmesi
-*   `docs:` Readme vb. dokümantasyon güncellemeleri
+### 2. Yeni Özellik Geliştirme (Branching)
+Doğrudan `main` dalına kod pushlamak **yasaktır**. Her iş için yeni bir dal açın:
+```bash
+git checkout -b feature/eklenecek-ozellik-adi
+```
 
-### 3. Pull Request (PR) Süreci
-1. Kendi branch'inizde işinizi bitirdiğinizde kodunuzu GitHub'a gönderin: `git push origin feature/kendi-ozelliginiz`
-2. GitHub üzerinden bir **Pull Request (PR)** açın.
-3. PR'da ne yaptığınızı kısaca açıklayın. Ekipteki en az bir kişinin onayını (Approve) aldıktan sonra kodunuzu `main` dalına birleştirin (Merge).
+### 3. Commit ve PR Süreci
+- Mesajlarınızın başına `feat:`, `fix:`, `docs:` gibi etiketler ekleyin (Conventional Commits).
+- İşiniz bittiğinde GitHub üzerinden `main` dalına bir **Pull Request (PR)** açın ve ekipteki bir arkadaşınızdan onay isteyin.
 
-### 4. Kod Standartları ve Uyarılar
-*   Kodu göndermeden önce mutlaka localinizde projenin derlendiğinden (`./mvnw clean install`) emin olun.
-*   Yapay Zeka (Agentic) yapılarına yeni bir fonksiyon ekliyorsanız, `AIAgentToolsConfig.java` içerisine `@Description` anotasyonu ile bu fonksiyonun ne işe yaradığını AI'ın anlayacağı dilde yazmayı unutmayın.
+### 4. Kod Standartları
+- Kodu göndermeden önce mutlaka localinizde projenin derlendiğinden (`./mvnw clean install` veya Docker'da hata almadığından) emin olun.
 
 Takımımıza başarılar dilerim, Hackathon'da görüşmek üzere! 🏆

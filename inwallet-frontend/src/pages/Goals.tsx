@@ -1,91 +1,238 @@
-import React, { useState } from 'react';
-import '../components/FinancialGoalsModal.css';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { goalApi, userApi } from '../services/api';
+import FinancialGoalsModal from '../components/FinancialGoalsModal';
+
+const getGoalIcon = (type: string, progress: number) => {
+  const icons: any = {
+    HOUSE: '🏠',
+    CAR: '🚗',
+    VACATION: '✈️',
+    EDUCATION: '🎓',
+    SAVINGS: '💰',
+    OTHER: '🎯'
+  };
+  
+  const icon = icons[type] || '🎯';
+  
+  // Progress based filters
+  let filter = 'grayscale(1) opacity(0.3)';
+  if (progress > 30) filter = 'grayscale(0.5) opacity(0.7)';
+  if (progress > 70) filter = 'grayscale(0) drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))';
+  if (progress >= 100) filter = 'drop-shadow(0 0 15px gold) scale(1.1)';
+
+  return <div style={{ fontSize: '64px', transition: 'all 0.5s ease', filter }}>{icon}</div>;
+};
 
 const Goals: React.FC = () => {
-  const [goalsList, setGoalsList] = useState([
-    { id: 1, title: 'Ev Peşinatı', target: 500000, current: 225000, inflationRate: 0.45 },
-    { id: 2, title: 'Araba (Enflasyon Ayarlı)', target: 300000, current: 36000, inflationRate: 0.12 },
-    { id: 3, title: 'Yaz Tatili', target: 50000, current: 15000, inflationRate: 0.05 },
-  ]);
+  const { userId } = useAuth();
+  const [goalsList, setGoalsList] = useState<any[]>([]);
+  const [_userData, setUserData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [goalToEdit, setGoalToEdit] = useState<any>(null);
 
-  const [newGoalTitle, setNewGoalTitle] = useState('');
-  const [newGoalTarget, setNewGoalTarget] = useState('');
+  const fetchGoalsAndUser = async () => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      const uId = Number(userId);
+      const [gData, uData] = await Promise.all([
+        goalApi.getGoals(uId).catch(() => []),
+        userApi.getMe(uId).catch(() => null)
+      ]);
+      setGoalsList(Array.isArray(gData) ? gData : []);
+      setUserData(uData);
+    } catch (err) {
+      console.error("Veri yükleme hatası:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleAddGoal = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newGoal = {
-      id: Date.now(),
-      title: newGoalTitle,
-      target: Number(newGoalTarget),
-      current: 0,
-      inflationRate: 0
-    };
-    setGoalsList([...goalsList, newGoal]);
-    setNewGoalTitle('');
-    setNewGoalTarget('');
+  useEffect(() => {
+    fetchGoalsAndUser();
+  }, [userId]);
+
+  const stats = useMemo(() => {
+    if (goalsList.length === 0) return { total: 0, completed: 0, avgProgress: 0 };
+    const total = goalsList.length;
+    const completed = goalsList.filter(g => (Number(g.completionPercentage) || 0) >= 100).length;
+    const avgProgress = goalsList.reduce((sum, g) => sum + (Number(g.completionPercentage) || 0), 0) / total;
+    return { total, completed, avgProgress };
+  }, [goalsList]);
+
+  const handleDeleteGoal = async (id: number) => {
+    if (!window.confirm("Bu hedefi silmek istediğinize emin misiniz?")) return;
+    try {
+      await goalApi.deleteGoal(id);
+      fetchGoalsAndUser();
+    } catch (err) {
+      alert("Hedef silinemedi.");
+    }
+  };
+
+  const handleEditGoal = (goal: any) => {
+    setGoalToEdit(goal);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenNewGoalModal = () => {
+    setGoalToEdit(null);
+    setIsModalOpen(true);
   };
 
   return (
-    <div className="dashboard-grid">
-      <div className="col-span-8 glass-card">
-        <div className="card-header">
-          <span className="card-title" style={{ fontSize: '24px' }}>Tüm Hedeflerim</span>
+    <div className="dashboard-grid animate-fade-in">
+      <div className="col-span-12" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: '32px', fontWeight: 800, color: 'var(--text-primary)' }}>Finansal Hedeflerin</h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '8px 0 0 0' }}>Hayallerine giden yolda ne kadar yaklaştığını takip et.</p>
         </div>
-        
-        <div className="goals-list" style={{ marginTop: '20px' }}>
-          {goalsList.map(goal => {
-            const progress = goal.target > 0 ? (goal.current / goal.target) * 100 : 0;
-            return (
-              <div key={goal.id} className="goal-item" style={{ padding: '20px' }}>
-                <div className="goal-info">
-                  <h4 style={{ fontSize: '18px' }}>{goal.title}</h4>
-                  <span className="goal-stats" style={{ fontSize: '16px', fontWeight: 'bold' }}>
-                    ₺{goal.current.toLocaleString()} / ₺{goal.target.toLocaleString()}
-                  </span>
-                </div>
-                <div className="goal-progress-bar" style={{ height: '12px', marginTop: '12px' }}>
-                  <div 
-                    className="goal-progress-fill" 
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-                <div className="goal-footer text-muted" style={{ marginTop: '8px', fontSize: '14px' }}>
-                  İlerleme: %{progress.toFixed(1)}
-                </div>
-              </div>
-            );
-          })}
+        <button onClick={handleOpenNewGoalModal} className="btn-primary" style={{ padding: '12px 24px', borderRadius: '12px', fontSize: '15px', fontWeight: 700 }}>
+          + Yeni Hedef Ekle
+        </button>
+      </div>
+
+      <div className="col-span-12" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+        <div className="glass-card" style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600 }}>AKTİF HEDEFLER</div>
+          <div style={{ fontSize: '36px', fontWeight: 900, marginTop: '12px' }}>{stats.total}</div>
+          <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', fontSize: '80px', opacity: 0.05 }}>🎯</div>
+        </div>
+        <div className="glass-card" style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600 }}>TAMAMLANAN</div>
+          <div style={{ fontSize: '36px', fontWeight: 900, marginTop: '12px', color: 'var(--accent-green)' }}>{stats.completed}</div>
+          <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', fontSize: '80px', opacity: 0.05 }}>🏆</div>
+        </div>
+        <div className="glass-card" style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600 }}>ORTALAMA İLERLEME</div>
+          <div style={{ fontSize: '36px', fontWeight: 900, marginTop: '12px', color: 'var(--accent-blue)' }}>%{Math.round(stats.avgProgress)}</div>
+          <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', fontSize: '80px', opacity: 0.05 }}>📈</div>
         </div>
       </div>
 
-      <div className="col-span-4 glass-card">
-        <div className="card-header">
-          <span className="card-title">Yeni Hedef Ekle</span>
-        </div>
-        <form className="add-goal-form" style={{ marginTop: '0', borderTop: 'none', paddingTop: '0' }} onSubmit={handleAddGoal}>
-          <div className="form-group">
-            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>Hedef Adı</label>
-            <input 
-              type="text" 
-              placeholder="Örn: Dünya Turu" 
-              value={newGoalTitle}
-              onChange={e => setNewGoalTitle(e.target.value)}
-              required 
-            />
+      <div className="col-span-12" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '24px' }}>
+        {loading && goalsList.length === 0 ? (
+          <div className="col-span-full" style={{ textAlign: 'center', padding: '100px', color: 'var(--text-secondary)' }}>Hedefleriniz yükleniyor...</div>
+        ) : goalsList.length === 0 ? (
+          <div className="col-span-full glass-card" style={{ textAlign: 'center', padding: '80px' }}>
+            <div style={{ fontSize: '48px', marginBottom: '20px' }}>🚀</div>
+            <h3 style={{ margin: 0 }}>Henüz bir hedefin yok mu?</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>Hemen birikim yapmaya başlamak için ilk hedefini oluştur!</p>
+            <button onClick={handleOpenNewGoalModal} className="btn-primary" style={{ padding: '12px 32px' }}>Şimdi Başla</button>
           </div>
-          <div className="form-group">
-            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>Hedef Tutarı (₺)</label>
-            <input 
-              type="number" 
-              placeholder="Örn: 100000" 
-              value={newGoalTarget}
-              onChange={e => setNewGoalTarget(e.target.value)}
-              required 
-            />
-          </div>
-          <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>Hedefe Başla</button>
-        </form>
+        ) : (
+          goalsList.map(goal => {
+            const currentAmount = Number(goal.currentAmount || 0);
+            const nominalTarget = Number(goal.targetAmount || 1);
+            const inflationTarget = Number(goal.currentTargetPrice || nominalTarget);
+            const progress = Math.min(100, Number(goal.completionPercentage || (currentAmount / inflationTarget * 100) || 0));
+            const remaining = Math.max(0, inflationTarget - currentAmount);
+            
+            const today = new Date();
+            const targetDate = goal.targetDate ? new Date(goal.targetDate) : null;
+            const monthsLeft = targetDate 
+              ? (targetDate.getFullYear() - today.getFullYear()) * 12 + (targetDate.getMonth() - today.getMonth())
+              : 0;
+            const monthlySavings = monthsLeft > 0 ? (remaining / monthsLeft) : remaining;
+
+            return (
+              <div key={goal.id} className="glass-card animate-hover" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative', borderTop: '4px solid var(--accent-blue)', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', right: '20px', top: '40px', zIndex: 0 }}>
+                   {getGoalIcon(goal.type, progress)}
+                </div>
+
+                <div style={{ position: 'absolute', top: '15px', right: '15px', display: 'flex', gap: '8px', zIndex: 10 }}>
+                  <button 
+                    onClick={() => handleEditGoal(goal)}
+                    style={{ background: 'rgba(59, 130, 246, 0.1)', border: 'none', color: 'var(--accent-blue)', cursor: 'pointer', fontSize: '14px', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Hedefi Düzenle"
+                  >
+                    ✏️
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteGoal(goal.id)}
+                    style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '14px', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Hedefi Sil"
+                  >
+                    🗑️
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
+                  <div style={{ maxWidth: '70%' }}>
+                    <h3 style={{ margin: 0, fontSize: '24px', fontWeight: 800 }}>{goal.name}</h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                      <span className="badge-secondary" style={{ fontSize: '11px' }}>🏆 Öncelik: {goal.priority}</span>
+                      <span className="badge-secondary" style={{ fontSize: '11px' }}>📅 {targetDate ? targetDate.toLocaleDateString('tr-TR') : '---'}</span>
+                      <span className="badge-secondary" style={{ fontSize: '11px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-blue)' }}>🏷️ {goal.type}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '5px', position: 'relative', zIndex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Hedef İlerlemesi</span>
+                    <span style={{ fontWeight: 800, color: progress >= 100 ? 'var(--accent-green)' : 'var(--accent-blue)' }}>%{progress.toFixed(1)}</span>
+                  </div>
+                  <div style={{ height: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
+                    <div 
+                      style={{ 
+                        height: '100%', 
+                        width: `${progress}%`, 
+                        background: progress >= 100 ? 'var(--accent-green)' : 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)',
+                        boxShadow: progress >= 100 ? '0 0 20px rgba(34, 197, 94, 0.4)' : '0 0 20px rgba(59, 130, 246, 0.3)',
+                        transition: 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                      }} 
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', position: 'relative', zIndex: 1 }}>
+                  <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '11px', marginBottom: '4px', fontWeight: 600 }}>BİRİKEN TUTAR</div>
+                    <div style={{ fontSize: '20px', fontWeight: 900 }}>₺{currentAmount.toLocaleString()}</div>
+                  </div>
+                  <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '11px', marginBottom: '4px', fontWeight: 600 }}>VADE SONU TAHMİNİ</div>
+                    <div style={{ fontSize: '20px', fontWeight: 900 }}>₺{inflationTarget.toLocaleString()}</div>
+                    {goal.expectedInflationRate && (
+                      <div style={{ fontSize: '10px', color: '#f59e0b', marginTop: '2px' }}>🔥 %{goal.expectedInflationRate} Enflasyon</div>
+                    )}
+                  </div>
+                </div>
+
+                {remaining > 0 ? (
+                  <div style={{ position: 'relative', zIndex: 1, padding: '15px', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                    <div style={{ fontSize: '14px', display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Aylık Hedef:</span>
+                      <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>₺{Math.round(monthlySavings).toLocaleString()}</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                      Kalan {monthsLeft} ay boyunca disiplinli birikim yapmalısınız.
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', color: 'var(--accent-green)', fontWeight: 800, fontSize: '16px', padding: '15px', borderRadius: '12px' }}>
+                    🎊 TEBRİKLER! HAYALİNE ULAŞTIN 🎊
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
+
+      <FinancialGoalsModal 
+        isOpen={isModalOpen} 
+        goalToEdit={goalToEdit}
+        onClose={() => {
+          setIsModalOpen(false);
+          setGoalToEdit(null);
+          fetchGoalsAndUser();
+        }} 
+      />
     </div>
   );
 };

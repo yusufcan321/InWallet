@@ -11,13 +11,31 @@ import Portfolio from './pages/Portfolio';
 import Transactions from './pages/Transactions';
 import Goals from './pages/Goals';
 import Settings from './pages/Settings';
-import Favorites from './pages/Favorites';
+import DCAPlanner from './pages/DCAPlanner';
+import EmergencyFund from './pages/EmergencyFund';
+
+import Market from './pages/Market';
 
 const AppContent: React.FC = () => {
-  const { isLoggedIn, username, logout } = useAuth();
-  const [currentView, setCurrentView] = useState('dashboard');
+  const { isLoggedIn, username } = useAuth();
+  
+  // Sayfa yenilendiğinde kalınan yerden devam etmesi için localStorage kullanımı
+  const [currentView, setCurrentView] = useState(() => {
+    return localStorage.getItem('inwallet_current_view') || 'dashboard';
+  });
+  
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
+
+  React.useEffect(() => {
+    localStorage.setItem('inwallet_current_view', currentView);
+  }, [currentView]);
+
+  React.useEffect(() => {
+    const handleNavigate = (e: any) => setCurrentView(e.detail);
+    window.addEventListener('navigate', handleNavigate);
+    return () => window.removeEventListener('navigate', handleNavigate);
+  }, []);
 
   if (!isLoggedIn) return <LoginPage />;
 
@@ -25,9 +43,11 @@ const AppContent: React.FC = () => {
     switch(currentView) {
       case 'dashboard': return <Dashboard />;
       case 'portfolio': return <Portfolio />;
+      case 'market': return <Market />;
       case 'transactions': return <Transactions />;
       case 'goals': return <Goals />;
-      case 'favorites': return <Favorites />;
+      case 'dca': return <DCAPlanner />;
+      case 'emergency': return <EmergencyFund />;
       case 'settings': return <Settings />;
       default: return <Dashboard />;
     }
@@ -53,50 +73,20 @@ const AppContent: React.FC = () => {
               ☰
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="8" y="4" width="18" height="12" rx="2" fill="#10B981" style={{ filter: 'drop-shadow(0 2px 4px rgba(16, 185, 129, 0.4))' }}/>
-                <circle cx="17" cy="10" r="2" fill="#047857"/>
-                <rect x="10" y="6" width="3" height="1" fill="#047857"/>
-                <rect x="21" y="6" width="3" height="1" fill="#047857"/>
-                <rect x="23" y="7" width="7" height="9" rx="1.5" fill="#F8FAFC" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}/>
-                <rect x="24" y="9" width="5" height="2" rx="0.5" fill="#CBD5E1"/>
-                <path d="M4 14C4 11.79 5.79 10 8 10H28C30.21 10 32 11.79 32 14V26C32 28.21 30.21 30 28 30H8C5.79 30 4 28.21 4 26V14Z" fill="url(#main_w_bg)" stroke="rgba(255,255,255,0.15)" strokeWidth="1" style={{ filter: 'drop-shadow(0 6px 12px rgba(37, 99, 235, 0.5))' }}/>
-                
-                <rect x="8" y="12" width="20" height="10" rx="1.5" fill="url(#titanium_card)" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}/>
-                <rect x="10" y="14" width="3" height="2" rx="0.5" fill="#FBBF24"/>
-                <circle cx="24" cy="15" r="1.5" fill="#EF4444" opacity="0.8"/>
-                <circle cx="25.5" cy="15" r="1.5" fill="#F59E0B" opacity="0.8"/>
-
-                <path d="M4 16C4 16 12 19 18 19C24 19 32 16 32 16V26C32 28.21 30.21 30 28 30H8C5.79 30 4 28.21 4 26V16Z" fill="url(#main_w_front)"/>
-                <path d="M4 16C4 16 12 19 18 19C24 19 32 16 32 16" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M11 22.5 L14.5 28 L18 22.5 L21.5 28 L25 22.5" stroke="#92400E" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }}/>
-                <path d="M11 21 L14.5 26.5 L18 21 L21.5 26.5 L25 21" stroke="url(#hologram_w)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M11 21 L14.5 26.5 L18 21 L21.5 26.5 L25 21" stroke="#FFFFFF" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" opacity="0.6"/>
-                <defs>
-                  <linearGradient id="titanium_card" x1="8" y1="12" x2="28" y2="22" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#E2E8F0"/>
-                    <stop offset="0.5" stopColor="#CBD5E1"/>
-                    <stop offset="1" stopColor="#94A3B8"/>
-                  </linearGradient>
-                  <linearGradient id="hologram_w" x1="10" y1="21" x2="26" y2="28" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#FDF08B"/>
-                    <stop offset="0.25" stopColor="#F59E0B"/>
-                    <stop offset="0.5" stopColor="#FCE7F3"/>
-                    <stop offset="0.75" stopColor="#FCD34D"/>
-                    <stop offset="1" stopColor="#FBBF24"/>
-                  </linearGradient>
-                  <linearGradient id="main_w_bg" x1="4" y1="10" x2="32" y2="30" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#1E3A8A"/>
-                    <stop offset="1" stopColor="#172554"/>
-                  </linearGradient>
-                  <linearGradient id="main_w_front" x1="4" y1="16" x2="32" y2="30" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#3B82F6"/>
-                    <stop offset="1" stopColor="#1D4ED8"/>
-                  </linearGradient>
-                </defs>
-              </svg>
+              {/* Inwallet Logo */}
+              <div style={{ 
+                fontSize: '20px', 
+                fontWeight: '900', 
+                background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                letterSpacing: '-1px',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+              }}>
+                InWallet
+              </div>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <div className="app-logo heading-gradient">InWallet</div>
                 <button 
                   onClick={() => setIsPrivacyMode(!isPrivacyMode)}
                   style={{
@@ -132,7 +122,7 @@ const AppContent: React.FC = () => {
           </div>
           <div className="user-profile">
             <div className="text-muted">Hoş Geldiniz, {username || 'Kullanıcı'}</div>
-            <div className="avatar" style={{ cursor: 'pointer' }} onClick={logout} title="Çıkış Yap">
+            <div className="avatar" style={{ cursor: 'pointer' }} onClick={() => setCurrentView('settings')} title="Profili Düzenle">
               {username ? username.slice(0, 2).toUpperCase() : 'IW'}
             </div>
           </div>

@@ -1,85 +1,184 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './FinancialGoalsModal.css';
+import { goalApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 interface FinancialGoalsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  goalToEdit?: any;
 }
 
-const goals = [
-  { id: 1, title: 'Ev Peşinatı', target: 500000, current: 225000, inflationRate: 0.45 },
-  { id: 2, title: 'Araba (Enflasyon Ayarlı)', target: 300000, current: 36000, inflationRate: 0.12 }
+const templates = [
+  { type: 'HOUSE', icon: '🏠', label: 'Ev' },
+  { type: 'CAR', icon: '🚗', label: 'Araba' },
+  { type: 'VACATION', icon: '✈️', label: 'Tatil' },
+  { type: 'EDUCATION', icon: '🎓', label: 'Eğitim' },
+  { type: 'SAVINGS', icon: '💰', label: 'Birikim' },
+  { type: 'OTHER', icon: '🎯', label: 'Diğer' },
 ];
 
-const FinancialGoalsModal: React.FC<FinancialGoalsModalProps> = ({ isOpen, onClose }) => {
+const FinancialGoalsModal: React.FC<FinancialGoalsModalProps> = ({ isOpen, onClose, goalToEdit }) => {
+  const { userId } = useAuth();
   const [newGoalTitle, setNewGoalTitle] = useState('');
   const [newGoalTarget, setNewGoalTarget] = useState('');
+  const [selectedType, setSelectedType] = useState('OTHER');
+  const [priority, setPriority] = useState(1);
+  const [targetDate, setTargetDate] = useState(new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]);
+  const [inflationRate, setInflationRate] = useState('45');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (goalToEdit) {
+      setNewGoalTitle(goalToEdit.name || '');
+      setNewGoalTarget(goalToEdit.targetAmount?.toString() || '');
+      setSelectedType(goalToEdit.type || 'OTHER');
+      setPriority(goalToEdit.priority || 1);
+      setTargetDate(goalToEdit.targetDate ? goalToEdit.targetDate.split('T')[0] : '');
+      setInflationRate(goalToEdit.expectedInflationRate?.toString() || '45');
+    } else {
+      setNewGoalTitle('');
+      setNewGoalTarget('');
+      setSelectedType('OTHER');
+      setPriority(1);
+      setTargetDate(new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]);
+      setInflationRate('45');
+    }
+  }, [isOpen, goalToEdit]);
 
   if (!isOpen) return null;
 
-  const handleAddGoal = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Geliştirmede buraya API çağrısı eklenecek
-    alert(`Yeni hedef eklendi: ${newGoalTitle} - ${newGoalTarget}`);
-    setNewGoalTitle('');
-    setNewGoalTarget('');
+    if (!userId) return;
+
+    const goalData = {
+      user: { id: Number(userId) },
+      name: newGoalTitle,
+      type: selectedType,
+      priority: Number(priority),
+      targetAmount: parseFloat(newGoalTarget),
+      expectedInflationRate: parseFloat(inflationRate),
+      targetDate: new Date(targetDate).toISOString()
+    };
+
+    try {
+      setLoading(true);
+      if (goalToEdit) {
+        await goalApi.updateGoal(goalToEdit.id, goalData);
+        alert('Hayalin başarıyla güncellendi! 🚀');
+      } else {
+        await goalApi.createGoal({ ...goalData, currentAmount: 0 });
+        alert('Hayalin başarıyla planlandı! 🚀');
+      }
+      onClose();
+    } catch (error: any) {
+      alert('Hata: ' + (error.message || 'İşlem başarısız'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="glass-card modal-content animate-slide-up">
+    <div className="modal-overlay" style={{ zIndex: 1000 }}>
+      <div className="glass-card modal-content animate-slide-up" style={{ maxWidth: '550px' }}>
         <div className="modal-header">
-          <h3 className="card-title">Finansal Hedeflerim</h3>
+          <h3 className="card-title">Hedefini Belirle</h3>
           <button className="close-btn" onClick={onClose}>&times;</button>
         </div>
         
         <div className="modal-body">
-          <div className="goals-list">
-            {goals.map(goal => {
-              const progress = (goal.current / goal.target) * 100;
-              return (
-                <div key={goal.id} className="goal-item">
-                  <div className="goal-info">
-                    <h4>{goal.title}</h4>
-                    <span className="goal-stats">
-                      ₺{goal.current.toLocaleString()} / ₺{goal.target.toLocaleString()}
-                    </span>
+          <form className="add-goal-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            <div>
+              <label className="text-muted" style={{ fontSize: '13px', display: 'block', marginBottom: '10px' }}>Hayalin Ne?</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                {templates.map(t => (
+                  <div 
+                    key={t.type}
+                    onClick={() => {
+                      setSelectedType(t.type);
+                      if (!newGoalTitle || templates.some(tmp => tmp.label === newGoalTitle)) {
+                        setNewGoalTitle(t.label);
+                      }
+                    }}
+                    style={{
+                      padding: '12px',
+                      borderRadius: '12px',
+                      background: selectedType === t.type ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${selectedType === t.type ? 'var(--accent-blue)' : 'rgba(255,255,255,0.1)'}`,
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s'
+                    }}
+                  >
+                    <div style={{ fontSize: '24px', marginBottom: '4px' }}>{t.icon}</div>
+                    <div style={{ fontSize: '12px', fontWeight: 600 }}>{t.label}</div>
                   </div>
-                  <div className="goal-progress-bar">
-                    <div 
-                      className="goal-progress-fill" 
-                      style={{ width: `${progress}%` }}
-                    ></div>
-                  </div>
-                  <div className="goal-footer text-muted">
-                    İlerleme: %{progress.toFixed(1)}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+            </div>
 
-          <form className="add-goal-form" onSubmit={handleAddGoal}>
-            <h4>Yeni Hedef Ekle</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '15px' }}>
+              <div className="form-group">
+                <label className="text-muted" style={{ fontSize: '12px' }}>Öncelik (1-10)</label>
+                <input 
+                  type="number" 
+                  min="1"
+                  max="10"
+                  value={priority}
+                  onChange={e => setPriority(Number(e.target.value))}
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label className="text-muted" style={{ fontSize: '12px' }}>Hedef Adı</label>
+                <input 
+                  type="text" 
+                  placeholder="Örn: Yeni Evim" 
+                  value={newGoalTitle}
+                  onChange={e => setNewGoalTitle(e.target.value)}
+                  required 
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div className="form-group">
+                <label className="text-muted" style={{ fontSize: '12px' }}>Hedef Tutar (₺)</label>
+                <input 
+                  type="number" 
+                  placeholder="5.000.000" 
+                  value={newGoalTarget}
+                  onChange={e => setNewGoalTarget(e.target.value)}
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label className="text-muted" style={{ fontSize: '12px' }}>Yıllık Enflasyon (%)</label>
+                <input 
+                  type="number" 
+                  value={inflationRate}
+                  onChange={e => setInflationRate(e.target.value)}
+                  required 
+                />
+              </div>
+            </div>
+
             <div className="form-group">
+              <label className="text-muted" style={{ fontSize: '12px' }}>Hedef Tarihi (Vade)</label>
               <input 
-                type="text" 
-                placeholder="Hedef Adı (örn: Tatil)" 
-                value={newGoalTitle}
-                onChange={e => setNewGoalTitle(e.target.value)}
+                type="date" 
+                value={targetDate}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={e => setTargetDate(e.target.value)}
                 required 
               />
             </div>
-            <div className="form-group">
-              <input 
-                type="number" 
-                placeholder="Hedef Tutar (₺)" 
-                value={newGoalTarget}
-                onChange={e => setNewGoalTarget(e.target.value)}
-                required 
-              />
-            </div>
-            <button type="submit" className="btn-primary">Hedef Ekle</button>
+
+            <button type="submit" className="btn-primary" disabled={loading} style={{ padding: '16px', fontSize: '16px' }}>
+              {loading ? (goalToEdit ? 'Güncelleniyor...' : 'Planlanıyor...') : (goalToEdit ? 'Değişiklikleri Kaydet 💾' : 'Hayalini Planla 🚀')}
+            </button>
           </form>
         </div>
       </div>

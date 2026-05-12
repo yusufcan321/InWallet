@@ -3,7 +3,6 @@ package com.wallet.portfolio.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "assets")
@@ -20,6 +19,7 @@ public class Asset {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private User user;
     
     // Altın, Borsa (Hisse), Döviz vb.
@@ -41,10 +41,10 @@ public class Asset {
     private BigDecimal currentPrice;
     
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private java.time.OffsetDateTime updatedAt;
     
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = java.time.OffsetDateTime.now();
     }
 }

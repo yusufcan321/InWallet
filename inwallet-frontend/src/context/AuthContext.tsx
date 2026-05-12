@@ -22,12 +22,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const token = getToken();
     if (token) {
       try {
+        const parts = token.split('.');
+        if (parts.length !== 3) throw new Error("Geçersiz Token");
+        
         // JWT payload'ını decode et (base64)
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const payload = JSON.parse(atob(parts[1]));
         setUsername(payload.sub);
-        setUserId(1); // Geliştirme aşamasında userId=1, ileride /api/me endpoint'i ile alınacak
+        setUserId(Number(payload.userId));
         setIsLoggedIn(true);
-      } catch {
+      } catch (err) {
+        console.error("Token çözme hatası:", err);
         authApi.logout();
         setIsLoggedIn(false);
       }
@@ -36,11 +40,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (user: string, password: string) => {
     await authApi.login(user, password);
-    const token = getToken()!;
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    setUsername(payload.sub);
-    setUserId(1);
-    setIsLoggedIn(true);
+    const token = getToken();
+    if (token) {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        setUsername(payload.sub);
+        setUserId(Number(payload.userId));
+        setIsLoggedIn(true);
+      }
+    }
   };
 
   const register = async (user: string, email: string, password: string) => {

@@ -1,214 +1,256 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import FinancialGoalsModal from './FinancialGoalsModal';
 import ScheduledTransactionsModal from './ScheduledTransactionsModal';
+import { useAuth } from '../context/AuthContext';
+import { assetApi, goalApi, userApi, marketApi, transactionApi } from '../services/api';
 
-const portfolioData = [
-  { name: 'Hisse Senedi', value: 55000, color: '#00d2ff' },
-  { name: 'Altın', value: 45000, color: '#f59e0b' },
-  { name: 'Kripto', value: 14500, color: '#8b5cf6' },
-  { name: 'Döviz', value: 10000, color: '#10b981' },
-];
+const COLORS = ['#00d2ff', '#f59e0b', '#8b5cf6', '#10b981', '#3b82f6'];
 
 const Dashboard: React.FC = () => {
+  const { userId, username, logout } = useAuth();
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [isGoalsModalOpen, setIsGoalsModalOpen] = useState(false);
   const [scheduledModalType, setScheduledModalType] = useState<'debt' | 'receivable' | null>(null);
+  
+  const [assets, setAssets] = useState<any[]>([]);
+  const [goals, setGoals] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [userData, setUserData] = useState<any>(null);
+  const [marketPrices, setMarketPrices] = useState<any>({});
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleNavigate = (viewId: string) => {
+    window.dispatchEvent(new CustomEvent('navigate', { detail: viewId }));
+  };
+
+  const fetchData = async () => {
+    if (!userId) return;
+    try {
+      const uId = Number(userId);
+      const [assetData, goalData, profileData, priceData, transData] = await Promise.all([
+        assetApi.getAssets(uId).catch(() => []),
+        goalApi.getGoals(uId).catch(() => []),
+        userApi.getMe(uId).catch(() => null),
+        marketApi.getPrices().catch(() => ({})),
+        transactionApi.getTransactions(uId).catch(() => [])
+      ]);
+      setAssets(assetData);
+      setGoals(goalData);
+      setUserData(profileData);
+      setMarketPrices(priceData);
+      setTransactions(transData);
+    } catch (error) {
+      console.error('Veri çekme hatası:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 20000);
+    return () => clearInterval(interval);
+  }, [userId, refreshKey]);
+
+  const stats = useMemo(() => {
+    const income = transactions
+      .filter(t => ['INCOME', 'SELL'].includes((t.type || "").toUpperCase()))
+      .reduce((s, t) => s + Number(t.amount || 0), 0);
+    
+    const expense = transactions
+      .filter(t => ['EXPENSE', 'BUY', 'INVESTMENT'].includes((t.type || "").toUpperCase()))
+      .reduce((s, t) => s + Number(t.amount || 0), 0);
+    
+    const cashBalance = income - expense;
+    const assetValue = assets.reduce((sum, asset) => {
+      const price = Number(marketPrices[asset.symbol] || asset.currentPrice || asset.averageBuyPrice || 0);
+      return sum + (Number(asset.quantity) * price);
+    }, 0);
+    const totalNetWorth = cashBalance + assetValue;
+    return { income, expense, cashBalance, assetValue, totalNetWorth };
+  }, [transactions, assets, marketPrices]);
+
+  const portfolioData = useMemo(() => {
+    return assets.map((asset, index) => {
+      const price = Number(marketPrices[asset.symbol] || asset.currentPrice || asset.averageBuyPrice || 0);
+      return {
+        name: asset.symbol || asset.name || 'Bilinmeyen',
+        value: Number(asset.quantity || 0) * price,
+        color: COLORS[index % COLORS.length]
+      };
+    }).filter(a => a.value > 0);
+  }, [assets, marketPrices]);
 
   return (
-    <div className="dashboard-grid">
-      
-      {/* Top Stats Section */}
-      <div className="col-span-12">
-        <div className="dashboard-grid">
-          <div className="col-span-4 glass-card">
-            <div className="card-header">
-              <span className="card-title">Toplam Net Varlık</span>
-            </div>
-            <div className="stat-value heading-gradient sensitive-data">₺124,500.00</div>
-            <div style={{ 
-              display: 'inline-block',
-              background: '+5.2%'.startsWith('+') ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-              color: '+5.2%'.startsWith('+') ? 'var(--accent-green)' : 'var(--accent-red)',
-              padding: '6px 12px',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: 700,
-              marginTop: '4px'
-            }} className="sensitive-data">
-              {'+5.2%'.startsWith('+') ? '▲' : '▼'} {'+5.2%'} bu ay
-            </div>
-          </div>
-          
-          <div className="col-span-4 glass-card">
-            <div className="card-header">
-              <span className="card-title">Aylık Gelir</span>
-            </div>
-            <div className="stat-value sensitive-data">₺45,000.00</div>
-            <div className="stat-label text-muted">Sabit Maaş</div>
-          </div>
-
-          <div className="col-span-4 glass-card">
-            <div className="card-header">
-              <span className="card-title">Aylık Gider</span>
-            </div>
-            <div className="stat-value sensitive-data">₺18,200.00</div>
-            <div className="stat-label text-danger">Kredi & Faturalar</div>
+    <div className="dashboard-grid animate-fade-in">
+      <div className="col-span-12" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', padding: '0 10px' }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)' }}>
+            Hoş Geldin, {userData?.username || username || 'Kullanıcı'}
+          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '6px' }}>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+              {currentTime.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+            <span style={{ color: 'var(--accent-blue)', fontWeight: 600, fontSize: '14px' }}>
+              {currentTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
           </div>
         </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="col-span-7 glass-card" style={{ minHeight: '400px' }}>
-        <div className="card-header">
-          <span className="card-title">Portföy Dağılımı & Analiz</span>
-        </div>
-        <div style={{ height: '340px', marginTop: '10px' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={portfolioData}
-                cx="50%"
-                cy="50%"
-                innerRadius={90}
-                outerRadius={130}
-                paddingAngle={5}
-                dataKey="value"
-                stroke="none"
-              >
-                {portfolioData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={(value: number) => `₺${value.toLocaleString()}`}
-                contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                itemStyle={{ color: '#fff' }}
-              />
-              <Legend verticalAlign="bottom" height={36}/>
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Sidebar Area */}
-      <div className="col-span-5 glass-card">
-        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span className="card-title">Finansal Hedefler</span>
-          <button 
-            onClick={() => setIsGoalsModalOpen(true)}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => handleNavigate('settings')}
             style={{
+              padding: '8px 18px',
+              borderRadius: '10px',
+              border: '1.5px solid var(--accent-blue)',
               background: 'transparent',
-              border: '1px solid var(--accent-blue)',
               color: 'var(--accent-blue)',
-              padding: '4px 12px',
-              borderRadius: '6px',
+              fontWeight: 600,
+              fontSize: '14px',
               cursor: 'pointer',
-              fontSize: '0.85rem'
+              transition: 'all 0.2s ease',
             }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(59,130,246,0.1)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
           >
-            Tümünü Gör
+            Profilim
+          </button>
+          <button
+            onClick={logout}
+            style={{
+              padding: '8px 18px',
+              borderRadius: '10px',
+              border: 'none',
+              background: 'rgba(239,68,68,0.12)',
+              color: '#ef4444',
+              fontWeight: 600,
+              fontSize: '14px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.22)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.12)'; }}
+          >
+            Çıkış Yap
           </button>
         </div>
-        <div style={{ marginBottom: '20px', marginTop: '15px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span>Ev Peşinatı</span>
-            <span className="text-muted">45%</span>
-          </div>
-          <div style={{ width: '100%', height: '8px', background: 'var(--bg-primary)', borderRadius: '4px', overflow: 'hidden' }}>
-            <div style={{ width: '45%', height: '100%', background: 'var(--accent-blue)' }}></div>
-          </div>
+      </div>
+
+      <div className="col-span-12" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+        <div className="glass-card" style={{ borderLeft: '4px solid var(--accent-blue)', background: 'rgba(59, 130, 246, 0.05)' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600 }}>TOPLAM NET VARLIK</div>
+          <div style={{ fontSize: '30px', fontWeight: 900, marginTop: '8px' }}>₺{stats.totalNetWorth.toLocaleString()}</div>
         </div>
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span>Araba (Enflasyon Ayarlı)</span>
-            <span className="text-muted">12%</span>
+        <div className="glass-card" style={{ borderLeft: '4px solid var(--accent-green)', background: 'rgba(16, 185, 129, 0.05)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600 }}>TOPLAM GELİR</span>
+            <button onClick={() => handleNavigate('transactions')} style={{ fontSize: '10px', color: 'var(--accent-green)', background: 'none', border: 'none', cursor: 'pointer' }}>Ekle</button>
           </div>
-          <div style={{ width: '100%', height: '8px', background: 'var(--bg-primary)', borderRadius: '4px', overflow: 'hidden' }}>
-            <div style={{ width: '12%', height: '100%', background: 'var(--accent-neon-blue)' }}></div>
+          <div style={{ fontSize: '30px', fontWeight: 900, marginTop: '8px', color: 'var(--accent-green)' }}>₺{stats.income.toLocaleString()}</div>
+        </div>
+        <div className="glass-card" style={{ borderLeft: '4px solid #ef4444', background: 'rgba(239, 68, 68, 0.05)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600 }}>TOPLAM GİDER</span>
+            <button onClick={() => handleNavigate('transactions')} style={{ fontSize: '10px', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}>Ekle</button>
+          </div>
+          <div style={{ fontSize: '30px', fontWeight: 900, marginTop: '8px', color: '#ef4444' }}>₺{stats.expense.toLocaleString()}</div>
+        </div>
+      </div>
+
+      <div className="col-span-8 glass-card">
+        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span className="card-title">Portföy Dağılımı</span>
+          <button
+            onClick={() => handleNavigate('portfolio')}
+            style={{
+              fontSize: '12px',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              border: '1.5px solid var(--accent-blue)',
+              background: 'transparent',
+              color: 'var(--accent-blue)',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(59,130,246,0.1)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+          >
+            Varlıkları Gör
+          </button>
+        </div>
+        <div style={{ height: '300px', width: '100%' }}>
+          {portfolioData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={portfolioData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5}>
+                  {portfolioData.map((entry: any, index: number) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                </Pie>
+                <Tooltip contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: 'none', borderRadius: '12px' }} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : <div style={{ textAlign: 'center', padding: '100px', color: 'var(--text-secondary)' }}>Henüz varlık verisi yok.</div>}
+        </div>
+      </div>
+
+      <div className="col-span-4" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="glass-card" style={{ flex: 1 }}>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="card-title">Finansal Hedefler</span>
+            <button
+              onClick={() => handleNavigate('goals')}
+              style={{
+                fontSize: '12px',
+                fontWeight: 700,
+                padding: '5px 14px',
+                borderRadius: '20px',
+                border: '1.5px solid var(--accent-blue)',
+                background: 'transparent',
+                color: 'var(--accent-blue)',
+                cursor: 'pointer',
+                letterSpacing: '0.3px',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(59,130,246,0.1)';
+                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                (e.currentTarget as HTMLButtonElement).style.transform = 'none';
+              }}
+            >Tümünü Gör →</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+            {goals.length > 0 ? goals.slice(0, 3).map(goal => {
+              const target = Number(goal.currentTargetPrice || goal.targetAmount || 1);
+              const progress = Math.min(100, (stats.totalNetWorth / target) * 100);
+              return (
+                <div key={goal.id} style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px' }}>
+                    <span>{goal.name}</span>
+                    <span style={{ fontWeight: 700 }}>%{progress.toFixed(1)}</span>
+                  </div>
+                  <div style={{ height: '5px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px' }}>
+                    <div style={{ height: '100%', width: `${progress}%`, background: 'var(--accent-blue)', borderRadius: '3px' }}></div>
+                  </div>
+                </div>
+              );
+            }) : <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '12px', padding: '20px' }}>Hedef bulunamadı.</p>}
           </div>
         </div>
       </div>
 
-      {/* Scheduled Debts & Receivables */}
-      <div className="col-span-12">
-        <div className="dashboard-grid">
-          <div 
-            className="col-span-6 glass-card interactive-card" 
-            style={{ cursor: 'pointer', padding: '20px' }}
-            onClick={() => setScheduledModalType('debt')}
-          >
-            <div className="card-header">
-              <span className="card-title">Planlanmış Tarihli Borçlar</span>
-            </div>
-            <div style={{ marginTop: '15px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: '0.95rem' }}>Konut Kredisi Taksiti</div>
-                  <div className="text-muted" style={{ fontSize: '0.8rem', marginTop: '2px' }}>15 Mayıs 2026</div>
-                </div>
-                <div className="text-danger sensitive-data" style={{ fontWeight: 'bold' }}>-₺12,500.00</div>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: '0.95rem' }}>Kredi Kartı Ekstresi</div>
-                  <div className="text-muted" style={{ fontSize: '0.8rem', marginTop: '2px' }}>22 Mayıs 2026</div>
-                </div>
-                <div className="text-danger sensitive-data" style={{ fontWeight: 'bold' }}>-₺8,450.00</div>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: '0.95rem' }}>Araç Sigortası</div>
-                  <div className="text-muted" style={{ fontSize: '0.8rem', marginTop: '2px' }}>05 Haziran 2026</div>
-                </div>
-                <div className="text-danger sensitive-data" style={{ fontWeight: 'bold' }}>-₺4,200.00</div>
-              </div>
-            </div>
-          </div>
-
-          <div 
-            className="col-span-6 glass-card interactive-card" 
-            style={{ cursor: 'pointer', padding: '20px' }}
-            onClick={() => setScheduledModalType('receivable')}
-          >
-            <div className="card-header">
-              <span className="card-title">Planlanmış Tarihli Alacaklar</span>
-            </div>
-            <div style={{ marginTop: '15px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: '0.95rem' }}>Freelance Proje</div>
-                  <div className="text-muted" style={{ fontSize: '0.8rem', marginTop: '2px' }}>12 Mayıs 2026</div>
-                </div>
-                <div className="text-success sensitive-data" style={{ fontWeight: 'bold' }}>+₺15,000.00</div>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: '0.95rem' }}>Kira Geliri</div>
-                  <div className="text-muted" style={{ fontSize: '0.8rem', marginTop: '2px' }}>20 Mayıs 2026</div>
-                </div>
-                <div className="text-success sensitive-data" style={{ fontWeight: 'bold' }}>+₺18,500.00</div>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: '0.95rem' }}>Temettü Ödemesi</div>
-                  <div className="text-muted" style={{ fontSize: '0.8rem', marginTop: '2px' }}>28 Mayıs 2026</div>
-                </div>
-                <div className="text-success sensitive-data" style={{ fontWeight: 'bold' }}>+₺3,250.00</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <FinancialGoalsModal 
-        isOpen={isGoalsModalOpen} 
-        onClose={() => setIsGoalsModalOpen(false)} 
-      />
-      <ScheduledTransactionsModal
-        isOpen={scheduledModalType !== null}
-        onClose={() => setScheduledModalType(null)}
-        type={scheduledModalType}
-      />
+      <FinancialGoalsModal isOpen={isGoalsModalOpen} onClose={() => { setIsGoalsModalOpen(false); setRefreshKey(k => k + 1); }} />
+      {scheduledModalType && (
+        <ScheduledTransactionsModal type={scheduledModalType} isOpen={!!scheduledModalType} onClose={() => { setScheduledModalType(null); setRefreshKey(k => k + 1); }} />
+      )}
     </div>
   );
 };
