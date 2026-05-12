@@ -41,4 +41,13 @@ public class GoalController {
         goalService.deleteGoal(id);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/{id}/add-progress")
+    public ResponseEntity<?> addProgress(@PathVariable Long id, @RequestParam java.math.BigDecimal amount) {
+        try {
+            return ResponseEntity.ok(goalService.updateGoalAmount(id, amount));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Hata: " + e.getMessage());
+        }
+    }
 }

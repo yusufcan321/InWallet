@@ -3,6 +3,27 @@ import { useAuth } from '../context/AuthContext';
 import { goalApi, userApi } from '../services/api';
 import FinancialGoalsModal from '../components/FinancialGoalsModal';
 
+const getGoalIcon = (type: string, progress: number) => {
+  const icons: any = {
+    HOUSE: '🏠',
+    CAR: '🚗',
+    VACATION: '✈️',
+    EDUCATION: '🎓',
+    SAVINGS: '💰',
+    OTHER: '🎯'
+  };
+  
+  const icon = icons[type] || '🎯';
+  
+  // Progress based filters
+  let filter = 'grayscale(1) opacity(0.3)';
+  if (progress > 30) filter = 'grayscale(0.5) opacity(0.7)';
+  if (progress > 70) filter = 'grayscale(0) drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))';
+  if (progress >= 100) filter = 'drop-shadow(0 0 15px gold) scale(1.1)';
+
+  return <div style={{ fontSize: '64px', transition: 'all 0.5s ease', filter }}>{icon}</div>;
+};
+
 const Goals: React.FC = () => {
   const { userId } = useAuth();
   const [goalsList, setGoalsList] = useState<any[]>([]);
@@ -52,7 +73,6 @@ const Goals: React.FC = () => {
 
   return (
     <div className="dashboard-grid animate-fade-in">
-      {/* Header Section */}
       <div className="col-span-12" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '32px', fontWeight: 800, color: 'var(--text-primary)' }}>Finansal Hedeflerin</h2>
@@ -63,7 +83,6 @@ const Goals: React.FC = () => {
         </button>
       </div>
 
-      {/* Summary Cards */}
       <div className="col-span-12" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '32px' }}>
         <div className="glass-card" style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600 }}>AKTİF HEDEFLER</div>
@@ -82,7 +101,6 @@ const Goals: React.FC = () => {
         </div>
       </div>
 
-      {/* Goals List Section */}
       <div className="col-span-12" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '24px' }}>
         {loading && goalsList.length === 0 ? (
           <div className="col-span-full" style={{ textAlign: 'center', padding: '100px', color: 'var(--text-secondary)' }}>Hedefleriniz yükleniyor...</div>
@@ -101,7 +119,6 @@ const Goals: React.FC = () => {
             const progress = Math.min(100, Number(goal.completionPercentage || (currentAmount / inflationTarget * 100) || 0));
             const remaining = Math.max(0, inflationTarget - currentAmount);
             
-            // Ay hesabı
             const today = new Date();
             const targetDate = goal.targetDate ? new Date(goal.targetDate) : null;
             const monthsLeft = targetDate 
@@ -110,72 +127,75 @@ const Goals: React.FC = () => {
             const monthlySavings = monthsLeft > 0 ? (remaining / monthsLeft) : remaining;
 
             return (
-              <div key={goal.id} className="glass-card animate-hover" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative', borderTop: '4px solid var(--accent-blue)' }}>
+              <div key={goal.id} className="glass-card animate-hover" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative', borderTop: '4px solid var(--accent-blue)', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', right: '20px', top: '40px', zIndex: 0 }}>
+                   {getGoalIcon(goal.type, progress)}
+                </div>
+
                 <button 
                   onClick={() => handleDeleteGoal(goal.id)}
-                  style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '14px', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '14px', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}
                   title="Hedefi Sil"
                 >
                   🗑️
                 </button>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: '22px', fontWeight: 800 }}>{goal.name}</h3>
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
+                  <div style={{ maxWidth: '70%' }}>
+                    <h3 style={{ margin: 0, fontSize: '24px', fontWeight: 800 }}>{goal.name}</h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                      <span className="badge-secondary" style={{ fontSize: '11px' }}>🏆 Öncelik: {goal.priority}</span>
                       <span className="badge-secondary" style={{ fontSize: '11px' }}>📅 {targetDate ? targetDate.toLocaleDateString('tr-TR') : '---'}</span>
-                      {goal.expectedInflationRate && (
-                        <span className="badge-secondary" style={{ fontSize: '11px', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>🔥 %{goal.expectedInflationRate} Enflasyon Düzeltmeli</span>
-                      )}
+                      <span className="badge-secondary" style={{ fontSize: '11px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-blue)' }}>🏷️ {goal.type}</span>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ marginTop: '5px' }}>
+                <div style={{ marginTop: '5px', position: 'relative', zIndex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>Hedef İlerlemesi</span>
                     <span style={{ fontWeight: 800, color: progress >= 100 ? 'var(--accent-green)' : 'var(--accent-blue)' }}>%{progress.toFixed(1)}</span>
                   </div>
-                  <div style={{ height: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
+                  <div style={{ height: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
                     <div 
                       style={{ 
                         height: '100%', 
                         width: `${progress}%`, 
                         background: progress >= 100 ? 'var(--accent-green)' : 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)',
-                        boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)',
-                        transition: 'width 1s ease-out'
+                        boxShadow: progress >= 100 ? '0 0 20px rgba(34, 197, 94, 0.4)' : '0 0 20px rgba(59, 130, 246, 0.3)',
+                        transition: 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)'
                       }} 
                     />
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', position: 'relative', zIndex: 1 }}>
                   <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '11px', marginBottom: '4px', fontWeight: 600 }}>BİRİKEN TUTAR</div>
-                    <div style={{ fontSize: '18px', fontWeight: 900 }}>₺{currentAmount.toLocaleString()}</div>
+                    <div style={{ fontSize: '20px', fontWeight: 900 }}>₺{currentAmount.toLocaleString()}</div>
                   </div>
                   <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '11px', marginBottom: '4px', fontWeight: 600 }}>GÜNCEL HEDEF</div>
-                    <div style={{ fontSize: '18px', fontWeight: 900 }}>₺{inflationTarget.toLocaleString()}</div>
-                    {inflationTarget > nominalTarget && (
-                      <div style={{ fontSize: '10px', color: '#f59e0b', marginTop: '2px' }}>Vade sonu tahmini</div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '11px', marginBottom: '4px', fontWeight: 600 }}>VADE SONU TAHMİNİ</div>
+                    <div style={{ fontSize: '20px', fontWeight: 900 }}>₺{inflationTarget.toLocaleString()}</div>
+                    {goal.expectedInflationRate && (
+                      <div style={{ fontSize: '10px', color: '#f59e0b', marginTop: '2px' }}>🔥 %{goal.expectedInflationRate} Enflasyon</div>
                     )}
                   </div>
                 </div>
 
                 {remaining > 0 ? (
-                  <div style={{ padding: '15px', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)', borderRadius: '12px' }}>
-                    <div style={{ fontSize: '13px', display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--text-secondary)' }}>Aylık Birikim Hedefi:</span>
+                  <div style={{ position: 'relative', zIndex: 1, padding: '15px', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                    <div style={{ fontSize: '14px', display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Aylık Hedef:</span>
                       <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>₺{Math.round(monthlySavings).toLocaleString()}</span>
                     </div>
                     <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                      Kalan {monthsLeft} ay boyunca her ay bu tutarı biriktirmelisiniz.
+                      Kalan {monthsLeft} ay boyunca disiplinli birikim yapmalısınız.
                     </div>
                   </div>
                 ) : (
-                  <div style={{ textAlign: 'center', color: 'var(--accent-green)', fontWeight: 800, fontSize: '15px', padding: '10px' }}>
-                    ✨ HEDEFE ULAŞILDI!
+                  <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', color: 'var(--accent-green)', fontWeight: 800, fontSize: '16px', padding: '15px', borderRadius: '12px' }}>
+                    🎊 TEBRİKLER! HAYALİNE ULAŞTIN 🎊
                   </div>
                 )}
               </div>

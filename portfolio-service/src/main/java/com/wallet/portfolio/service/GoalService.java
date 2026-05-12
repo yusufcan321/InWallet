@@ -18,11 +18,62 @@ public class GoalService {
 
     private final GoalRepository goalRepository;
     private final EmailService emailService;
+    private final com.wallet.portfolio.repository.AssetRepository assetRepository;
 
     public List<Goal> getGoalsByUserId(Long userId) {
         List<Goal> goals = goalRepository.findByUserId(userId);
-        goals.forEach(this::calculateInflationAdjustment);
+        
+        // 1. Hedefleri önce önceliğe (priority), sonra tarihe göre sırala
+        goals.sort(java.util.Comparator.comparing(Goal::getPriority)
+                                     .thenComparing(Goal::getTargetDate));
+
+        // 2. Kullanıcının toplam varlık değerini (dağıtılacak havuz) hesapla
+        BigDecimal remainingPool = calculateTotalPortfolioValue(userId);
+        
+        for (Goal goal : goals) {
+            // Önce bu hedef için enflasyon düzeltmesini hesapla (currentTargetPrice belirlensin)
+            calculateInflationAdjustment(goal);
+            
+            BigDecimal targetNeeded = goal.getCurrentTargetPrice() != null ? goal.getCurrentTargetPrice() : goal.getTargetAmount();
+            
+            // Havuzdaki paradan bu hedefe ne kadar düşüyor?
+            if (remainingPool.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal allocation = remainingPool.min(targetNeeded);
+                goal.setCurrentAmount(allocation);
+                remainingPool = remainingPool.subtract(allocation);
+            } else {
+                goal.setCurrentAmount(BigDecimal.ZERO);
+            }
+            
+            // Yüzdeyi yeniden hesapla (Çünkü currentAmount değişti)
+            recalculatePercentage(goal);
+        }
         return goals;
+    }
+
+    private void recalculatePercentage(Goal goal) {
+        BigDecimal target = goal.getCurrentTargetPrice() != null ? goal.getCurrentTargetPrice() : goal.getTargetAmount();
+        if (target != null && target.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal current = goal.getCurrentAmount() != null ? goal.getCurrentAmount() : BigDecimal.ZERO;
+            BigDecimal percentage = current.multiply(new BigDecimal(100))
+                                          .divide(target, 2, RoundingMode.HALF_UP);
+            goal.setCompletionPercentage(percentage);
+        }
+    }
+
+    private BigDecimal calculateTotalPortfolioValue(Long userId) {
+        List<com.wallet.portfolio.entity.Asset> assets = assetRepository.findByUserId(userId);
+        return assets.stream()
+                .map(asset -> {
+                    // Eğer anlık fiyat yoksa alış fiyatını baz al
+                    BigDecimal price = asset.getCurrentPrice();
+                    if (price == null || price.compareTo(BigDecimal.ZERO) == 0) {
+                        price = asset.getAverageBuyPrice() != null ? asset.getAverageBuyPrice() : BigDecimal.ZERO;
+                    }
+                    BigDecimal quantity = asset.getQuantity() != null ? asset.getQuantity() : BigDecimal.ZERO;
+                    return price.multiply(quantity);
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private void calculateInflationAdjustment(Goal goal) {
@@ -41,13 +92,6 @@ public class GoalService {
         
         double adjustedPrice = goal.getTargetAmount().doubleValue() * Math.pow(1 + inflationRate, years);
         goal.setCurrentTargetPrice(new BigDecimal(adjustedPrice).setScale(2, RoundingMode.HALF_UP));
-
-        if (goal.getCurrentAmount() != null && goal.getCurrentTargetPrice().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal percentage = goal.getCurrentAmount()
-                    .multiply(new BigDecimal(100))
-                    .divide(goal.getCurrentTargetPrice(), 2, RoundingMode.HALF_UP);
-            goal.setCompletionPercentage(percentage);
-        }
     }
 
     @Transactional

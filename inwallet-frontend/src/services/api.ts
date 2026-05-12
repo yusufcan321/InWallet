@@ -191,6 +191,15 @@ export const goalApi = {
     if (!res.ok) throw new Error('Hedef silinemedi.');
     return true;
   },
+
+  updateGoalProgress: async (goalId: number, amount: number) => {
+    const res = await request(`${BASE_URL}/api/goals/${goalId}/add-progress?amount=${amount}`, {
+      method: 'POST',
+      headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error('Birikim eklenemedi.');
+    return res.json();
+  },
 };
 
 // ─── AI Assistant Endpoint ──────────────────────────────

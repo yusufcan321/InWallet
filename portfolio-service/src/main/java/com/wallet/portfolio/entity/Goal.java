@@ -26,6 +26,13 @@ public class Goal {
     // Hedef Adı (Ev, Araba, Telefon vb.)
     private String name;
 
+    // Hedef Tipi (HOUSE, CAR, VACATION, EDUCATION, OTHER)
+    @Column(nullable = false)
+    private String type = "OTHER";
+
+    // Hedef Önceliği (1 en yüksek, paranın önce akacağı yer)
+    private Integer priority = 1;
+
     // Hedefin başlangıç (bugünkü) fiyatı
     private BigDecimal initialPrice;
 
