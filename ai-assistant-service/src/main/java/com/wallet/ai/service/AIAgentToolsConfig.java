@@ -9,6 +9,9 @@ import java.util.function.Function;
 @Configuration
 public class AIAgentToolsConfig {
 
+    @org.springframework.beans.factory.annotation.Value("${PORTFOLIO_SERVICE_URL:http://portfolio-service:8080}")
+    private String portfolioServiceUrl;
+
     public record UserPortfolioRequest(Long userId) {}
     public record UserPortfolioResponse(String portfolioSummary) {}
 
@@ -24,7 +27,7 @@ public class AIAgentToolsConfig {
         return request -> {
             try {
                 String response = restClient.get()
-                        .uri("http://localhost:8080/api/assets/user/" + request.userId())
+                        .uri(portfolioServiceUrl + "/api/assets/user/" + request.userId())
                         .retrieve()
                         .body(String.class);
                 return new UserPortfolioResponse(response);
@@ -40,7 +43,7 @@ public class AIAgentToolsConfig {
         return request -> {
             try {
                 String response = restClient.get()
-                        .uri("http://localhost:8080/api/goals/user/" + request.userId())
+                        .uri(portfolioServiceUrl + "/api/goals/user/" + request.userId())
                         .retrieve()
                         .body(String.class);
                 return new UserGoalsResponse(response);
@@ -56,7 +59,7 @@ public class AIAgentToolsConfig {
         return request -> {
             try {
                 String response = restClient.get()
-                        .uri("http://localhost:8080/api/transactions/user/" + request.userId())
+                        .uri(portfolioServiceUrl + "/api/transactions/user/" + request.userId())
                         .retrieve()
                         .body(String.class);
                 return new UserTransactionsResponse(response);

@@ -26,20 +26,26 @@ const AIChatWidget: React.FC = () => {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const sendMessage = async (e?: React.FormEvent, overrideText?: string) => {
+    if (e) e.preventDefault();
+    
+    const userText = overrideText || input.trim();
+    if (!userText) return;
 
-    const userText = input.trim();
     setMessages(prev => [...prev, { sender: 'user', text: userText }]);
-    setInput('');
+    if (!overrideText) setInput('');
     setIsLoading(true);
 
     try {
       const data = await aiApi.chat(userId ?? 1, userText);
       setMessages(prev => [...prev, { sender: 'ai', text: data }]);
-    } catch {
-      setMessages(prev => [...prev, { sender: 'error', text: 'Bağlantı hatası: AI Asistan servisine ulaşılamıyor. Lütfen backend\'in çalıştığından emin olun.' }]);
+    } catch (err: any) {
+      setMessages(prev => [...prev, { 
+        sender: 'error', 
+        text: err.message.includes('Failed to fetch') 
+          ? 'Bağlantı hatası: AI Asistan servisine ulaşılamıyor. Lütfen backend\'in çalıştığından emin olun.' 
+          : `Hata: ${err.message}` 
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -148,15 +154,15 @@ const AIChatWidget: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
           
-          <div style={{ padding: '0 16px 12px 16px', display: 'flex', gap: '8px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }} className="hide-scrollbar">
+            <div style={{ padding: '0 16px 12px 16px', display: 'flex', gap: '8px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }} className="hide-scrollbar">
             <button 
-              onClick={() => { setInput('Portföyümü analiz et'); sendMessage(new Event('submit') as any); }}
+              onClick={() => sendMessage(undefined, 'Portföyümü analiz et')}
               style={{ whiteSpace: 'nowrap', padding: '6px 12px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '16px', fontSize: '12px', color: 'var(--accent-blue)', cursor: 'pointer', transition: 'all 0.2s' }}
             >
               📊 Portföy Analizi
             </button>
             <button 
-              onClick={() => { setInput('Hedeflerim için enflasyon riskimi hesapla'); sendMessage(new Event('submit') as any); }}
+              onClick={() => sendMessage(undefined, 'Hedeflerim için enflasyon riskimi hesapla')}
               style={{ whiteSpace: 'nowrap', padding: '6px 12px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '16px', fontSize: '12px', color: '#f59e0b', cursor: 'pointer', transition: 'all 0.2s' }}
             >
               🔥 Enflasyon Riski

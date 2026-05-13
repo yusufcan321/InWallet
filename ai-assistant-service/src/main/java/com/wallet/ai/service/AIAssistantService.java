@@ -1,67 +1,107 @@
 package com.wallet.ai.service;
 
-import org.springframework.ai.openai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.openai.OpenAiAudioSpeechModel;
-import org.springframework.ai.openai.OpenAiAudioTranscriptionModel;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class AIAssistantService {
 
-    private final ChatClient chatClient;
-    private final OpenAiAudioTranscriptionModel transcriptionModel;
-    private final OpenAiAudioSpeechModel speechModel;
+    private final RestClient restClient;
 
-    public AIAssistantService(ChatClient.Builder chatClientBuilder, 
-                              OpenAiAudioTranscriptionModel transcriptionModel,
-                              OpenAiAudioSpeechModel speechModel) {
-        this.transcriptionModel = transcriptionModel;
-        this.speechModel = speechModel;
-        this.chatClient = chatClientBuilder
-                .defaultSystem("""
-                        Sen, InWallet uygulamasının üst düzey, nesnel ve analitik Finans Uzmanı yapay zekasısın.
-                        
-                        Görevlerin ve Temel Kuralların:
-                        1. Analitik Yaklaşım: Kullanıcının sana sunduğu (veya fonksiyonlarla elde ettiğin) portföy durumunu, gelirini ve hedeflerini her zaman analiz et.
-                        2. Risk ve Çeşitlendirme: Her zaman risk yönetimi ve portföy çeşitlendirmesi (diversifikasyon) tavsiyelerinde bulun. Asla tüm parayı tek bir yatırım aracına yatırmayı önerme.
-                        3. Enflasyon Gerçekliği: Tasarruf ve hedef hesaplamalarında enflasyon etkisini göz önünde bulundur. Hedeflerin zamanla pahalılaşacağını hatırlat.
-                        4. Yapısal Yanıt: Cevaplarını her zaman anlaşılır, maddeler halinde ve profesyonel bir dille ver.
-                        5. Kesinlik: Asla doğrudan "Şu hisseyi al", "Altın kesin yükselir" gibi kesin iddialarda bulunma. Olasılıklardan ve piyasa beklentilerinden bahset.
-                        6. Yasal Uyarı: Her cevabının en sonuna mutlaka şu metni ekle: "Yasal Uyarı: Burada yer alan yatırım bilgi, yorum ve tavsiyeleri yatırım danışmanlığı kapsamında değildir."
-                        
-                        Sana verilen fonksiyonları (Agentic Tools) kullanarak kullanıcının güncel durumunu öğrenebilir ve buna göre kişiselleştirilmiş finansal tavsiyeler verebilirsin.
-                        """)
-                .build();
+    @org.springframework.beans.factory.annotation.Value("${PORTFOLIO_SERVICE_URL:http://portfolio-service:8080}")
+    private String portfolioServiceUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${GEMINI_API_KEY}")
+    private String geminiApiKey;
+
+    public AIAssistantService(RestClient.Builder restClientBuilder) {
+        this.restClient = restClientBuilder.build();
     }
 
     public String chatWithAgent(String userMessage, Long userId) {
-        String enrichedUserMessage = String.format(
-                """
-                Kullanıcı Mesajı: %s
-                
-                [Sistem Notu: Bu kullanıcının sistemdeki ID numarası %d. Lütfen tavsiye vermeden önce sana verilen fonksiyonları 
-                (getUserPortfolio, getUserGoals, getUserTransactions) çağırarak kullanıcının güncel varlıklarını, hedeflerini ve gelir/gider akışını analiz et.
-                Kullanıcıya id numarasıyla hitap etme.]
-                """, 
-                userMessage, userId);
+        try {
+            // Fetch all context data in parallel
+            CompletableFuture<String> portfolioFuture = CompletableFuture.supplyAsync(() -> fetchData(portfolioServiceUrl + "/api/assets/user/" + userId));
+            CompletableFuture<String> goalsFuture = CompletableFuture.supplyAsync(() -> fetchData(portfolioServiceUrl + "/api/goals/user/" + userId));
+            CompletableFuture<String> transactionsFuture = CompletableFuture.supplyAsync(() -> fetchData(portfolioServiceUrl + "/api/transactions/user/" + userId));
 
-        return chatClient.prompt()
-                .user(enrichedUserMessage)
-                .functions("getUserPortfolio", "getUserGoals", "getUserTransactions")
-                .call()
-                .content();
+            CompletableFuture.allOf(portfolioFuture, goalsFuture, transactionsFuture).join();
+
+            String portfolio = portfolioFuture.join();
+            String goals = goalsFuture.join();
+            String transactions = transactionsFuture.join();
+
+            String systemPromptText = """
+                Sen InWallet finansal asistanısın. Kullanıcının cüzdan verileri aşağıdadır:
+                
+                PORTFÖY: %s
+                HEDEFLER: %s
+                İŞLEMLER: %s
+                
+                Bu verilere dayanarak kullanıcının sorularını yanıtla. Portföy analizi yap, tasarruf önerileri ver veya enflasyon riskini hesapla.
+                Yanıtların profesyonel, motive edici ve finansal açıdan tutarlı olsun.
+                Yasal Uyarı: Burada yer alan yatırım bilgi, yorum ve tavsiyeleri yatırım danışmanlığı kapsamında değildir.
+                """.formatted(portfolio, goals, transactions);
+
+            // Direct Call to Google Gemini API (REST)
+            String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" + geminiApiKey;
+
+            Map<String, Object> requestBody = Map.of(
+                "contents", List.of(
+                    Map.of(
+                        "role", "user",
+                        "parts", List.of(
+                            Map.of("text", systemPromptText + "\n\nKullanıcı Mesajı: " + userMessage)
+                        )
+                    )
+                ),
+                "generationConfig", Map.of(
+                    "temperature", 0.7,
+                    "topP", 0.95,
+                    "maxOutputTokens", 2048
+                )
+            );
+
+            Map<String, Object> response = restClient.post()
+                    .uri(url)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(Map.class);
+
+            if (response != null && response.containsKey("candidates")) {
+                List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
+                if (!candidates.isEmpty()) {
+                    Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+                    List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
+                    return (String) parts.get(0).get("text");
+                }
+            }
+            
+            return "Üzgünüm, şu an yanıt oluşturamıyorum. Lütfen daha sonra tekrar deneyin.";
+
+        } catch (Exception e) {
+            return "AI Servis Hatası: " + e.getMessage();
+        }
     }
 
-    public byte[] chatWithVoice(Resource audioResource, Long userId) {
-        // 1. Sesi metne çevir (Speech-to-Text)
-        String userMessage = transcriptionModel.call(new AudioTranscriptionPrompt(audioResource)).getResult().getOutput();
-        
-        // 2. Metni asistan ile işle (Agentic Workflow)
-        String assistantResponse = chatWithAgent(userMessage, userId);
-        
-        // 3. Asistanın cevabını sese çevir (Text-to-Speech)
-        return speechModel.call(assistantResponse);
+    private String fetchData(String url) {
+        try {
+            return restClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .body(String.class);
+        } catch (Exception e) {
+            return "Veri alınamadı: " + e.getMessage();
+        }
+    }
+
+    public byte[] chatWithVoice(Resource audioFile, Long userId) {
+        String response = chatWithAgent("Sesli mesaj gönderildi.", userId);
+        return response.getBytes(); 
     }
 }

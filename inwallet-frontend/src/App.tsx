@@ -13,8 +13,9 @@ import Goals from './pages/Goals';
 import Settings from './pages/Settings';
 import DCAPlanner from './pages/DCAPlanner';
 import EmergencyFund from './pages/EmergencyFund';
-
 import Market from './pages/Market';
+import RecurringTransactions from './pages/RecurringTransactions';
+import Profile from './pages/Profile';
 
 const AppContent: React.FC = () => {
   const { isLoggedIn, username, firstName, lastName } = useAuth();
@@ -46,8 +47,10 @@ const AppContent: React.FC = () => {
       case 'market': return <Market />;
       case 'transactions': return <Transactions />;
       case 'goals': return <Goals />;
+      case 'recurring': return <RecurringTransactions />;
       case 'dca': return <DCAPlanner />;
       case 'emergency': return <EmergencyFund />;
+      case 'profile': return <Profile />;
       case 'settings': return <Settings />;
       default: return <Dashboard />;
     }

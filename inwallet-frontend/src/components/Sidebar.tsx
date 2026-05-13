@@ -14,10 +14,11 @@ const menuItems = [
   { id: 'dashboard', label: 'Ana Sayfa', desc: 'Genel özet panosu' },
   { id: 'portfolio', label: 'Portföyüm', desc: 'Varlıklarınızı inceleyin' },
   { id: 'market', label: 'Piyasalar', desc: 'Canlı veriler ve yatırım' },
+  { id: 'recurring', label: 'Otomatik İşlemler', desc: 'Tekrarlayan gelir/gider' },
   { id: 'dca', label: 'DCA Planlayıcı', desc: 'Düzenli yatırım planı' },
   { id: 'transactions', label: 'İşlem Geçmişi', desc: 'Gelir ve gider akışı' },
   { id: 'goals', label: 'Hedeflerim', desc: 'Hayallerinizi planlayın' },
-  { id: 'favorites', label: 'Favoriler', desc: 'Sık kullanılan işlemler' },
+  { id: 'profile', label: 'Profilim', desc: 'Bilgilerinizi güncelleyin' },
   { id: 'settings', label: 'Ayarlar', desc: 'Uygulama tercihleri' },
 ];
 
@@ -62,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentView, onNavig
           <button className="close-btn" onClick={onClose} style={{ fontSize: '28px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>×</button>
         </div>
 
-        <div className="sidebar-profile" style={{ cursor: 'pointer' }} onClick={() => handleNavigation('settings')}>
+        <div className="sidebar-profile" style={{ cursor: 'pointer' }} onClick={() => handleNavigation('profile')}>
           <div className="profile-avatar" style={{ background: 'var(--accent-blue)', color: 'white' }}>
             {initials}
           </div>

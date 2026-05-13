@@ -17,7 +17,7 @@ services:
     networks:
       - inwallet-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d wallet_db"]
+      test: [ "CMD-SHELL", "pg_isready -U user -d wallet_db" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -30,7 +30,7 @@ services:
     networks:
       - inwallet-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -99,6 +99,8 @@ services:
       - "8081:8081"
     environment:
       PORTFOLIO_SERVICE_URL: http://portfolio-service:8080
+      GOOGLE_CLOUD_PROJECT_ID: ${GOOGLE_CLOUD_PROJECT_ID:-senin-proje-id}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-senin-api-key}
     depends_on:
       - portfolio-service
     networks:

@@ -6,14 +6,17 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      '/api/ai': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+        timeout: 60000,
+        proxyTimeout: 60000,
+      },
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-      },
-      '/ai': {
-        target: 'http://localhost:8081',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/ai/, ''),
+        timeout: 60000,
+        proxyTimeout: 60000,
       },
     },
   },
