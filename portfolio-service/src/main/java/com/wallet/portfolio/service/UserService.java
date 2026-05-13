@@ -32,13 +32,24 @@ public class UserService {
     @CacheEvict(value = "users", key = "#id")
     public User updateUser(Long id, User updatedUser) {
         User existingUser = getUserById(id);
+        if (updatedUser.getUsername() != null && !updatedUser.getUsername().isBlank()) {
+            existingUser.setUsername(updatedUser.getUsername());
+        }
+        if (updatedUser.getEmail() != null && !updatedUser.getEmail().isBlank()) {
+            existingUser.setEmail(updatedUser.getEmail());
+        }
+        if (updatedUser.getFirstName() != null) {
+            existingUser.setFirstName(updatedUser.getFirstName());
+        }
+        if (updatedUser.getLastName() != null) {
+            existingUser.setLastName(updatedUser.getLastName());
+        }
         if (updatedUser.getMonthlyIncome() != null) {
             existingUser.setMonthlyIncome(updatedUser.getMonthlyIncome());
         }
         if (updatedUser.getMonthlyExpense() != null) {
             existingUser.setMonthlyExpense(updatedUser.getMonthlyExpense());
         }
-        // Diğer alanlar da eklenebilir
         return userRepository.save(existingUser);
     }
 }

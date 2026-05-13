@@ -102,42 +102,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => handleNavigate('settings')}
-            style={{
-              padding: '8px 18px',
-              borderRadius: '10px',
-              border: '1.5px solid var(--accent-blue)',
-              background: 'transparent',
-              color: 'var(--accent-blue)',
-              fontWeight: 600,
-              fontSize: '14px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(59,130,246,0.1)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
-          >
-            Profilim
-          </button>
-          <button
-            onClick={logout}
-            style={{
-              padding: '8px 18px',
-              borderRadius: '10px',
-              border: 'none',
-              background: 'rgba(239,68,68,0.12)',
-              color: '#ef4444',
-              fontWeight: 600,
-              fontSize: '14px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.22)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.12)'; }}
-          >
-            Çıkış Yap
-          </button>
+          {/* Header butonları kaldırıldı */}
         </div>
       </div>
 
@@ -149,14 +114,48 @@ const Dashboard: React.FC = () => {
         <div className="glass-card" style={{ borderLeft: '4px solid var(--accent-green)', background: 'rgba(16, 185, 129, 0.05)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600 }}>TOPLAM GELİR</span>
-            <button onClick={() => handleNavigate('transactions')} style={{ fontSize: '10px', color: 'var(--accent-green)', background: 'none', border: 'none', cursor: 'pointer' }}>Ekle</button>
+            <button
+              onClick={() => handleNavigate('transactions')}
+              style={{
+                fontSize: '10px',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                border: '1px solid var(--accent-green)',
+                background: 'transparent',
+                color: 'var(--accent-green)',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.1)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+            >
+              Ekle
+            </button>
           </div>
           <div style={{ fontSize: '30px', fontWeight: 900, marginTop: '8px', color: 'var(--accent-green)' }} className="sensitive-data">₺{stats.income.toLocaleString()}</div>
         </div>
         <div className="glass-card" style={{ borderLeft: '4px solid #ef4444', background: 'rgba(239, 68, 68, 0.05)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600 }}>TOPLAM GİDER</span>
-            <button onClick={() => handleNavigate('transactions')} style={{ fontSize: '10px', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}>Ekle</button>
+            <button
+              onClick={() => handleNavigate('transactions')}
+              style={{
+                fontSize: '10px',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                border: '1px solid #ef4444',
+                background: 'transparent',
+                color: '#ef4444',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.1)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+            >
+              Ekle
+            </button>
           </div>
           <div style={{ fontSize: '30px', fontWeight: 900, marginTop: '8px', color: '#ef4444' }} className="sensitive-data">₺{stats.expense.toLocaleString()}</div>
         </div>
