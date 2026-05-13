@@ -8,7 +8,7 @@ import { assetApi, goalApi, userApi, marketApi, transactionApi } from '../servic
 const COLORS = ['#00d2ff', '#f59e0b', '#8b5cf6', '#10b981', '#3b82f6'];
 
 const Dashboard: React.FC = () => {
-  const { userId, username, logout } = useAuth();
+  const { userId, username } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isGoalsModalOpen, setIsGoalsModalOpen] = useState(false);
   const [scheduledModalType, setScheduledModalType] = useState<'debt' | 'receivable' | null>(null);

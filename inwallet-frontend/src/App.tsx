@@ -79,10 +79,6 @@ const AppContent: React.FC = () => {
                 style={{
                   fontSize: '20px',
                   fontWeight: '900',
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
                   letterSpacing: '-1px',
                   fontFamily: 'system-ui, -apple-system, sans-serif',
                   border: 'none',
