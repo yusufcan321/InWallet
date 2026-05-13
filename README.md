@@ -60,6 +60,27 @@ Kök dizinde bulunan `openapi.json` dosyasını Postman'e "Import" ederek tüm A
 
 ---
 
+## 🤖 Gemini AI Entegrasyonu ve Yapılandırma
+
+InWallet Asistanı, Google'ın en güncel **Gemini 1.5 Flash/Pro** modellerini kullanarak finansal analiz yapar. Kararlı bir çalışma için aşağıdaki adımları takip edin:
+
+### 1. API Anahtarı Alın
+- **[Google AI Studio](https://aistudio.google.com/app/apikey)** adresine gidin.
+- "Create API key" butonu ile yeni bir anahtar oluşturun.
+- (Önemli) Eğer kısıtlı bir proje kullanıyorsanız, API anahtarının **"Generative Language API"** yetkisine sahip olduğundan emin olun.
+
+### 2. Ortam Değişkenlerini Ayarlayın
+`.env` dosyanızda şu değişkenlerin tanımlı olduğundan emin olun:
+```bash
+# Google AI Studio'dan aldığınız anahtar
+GEMINI_API_KEY=AIzaSy... 
+```
+
+### 3. Model Seçimi ve Performans
+Sistem varsayılan olarak en yüksek hız ve kota verimliliği için `gemini-flash-latest` modelini kullanacak şekilde yapılandırılmıştır. Gerekirse `ai-assistant-service/src/main/resources/application.yml` dosyasından model ismini değiştirebilirsiniz.
+
+---
+
 ## 🆘 Olası Hatalar ve Çözümleri (Troubleshooting)
 
 - **Port Çakışması (8080/5173):** Başka bir uygulamanın bu portları kullanmadığından emin olun veya `docker compose down` yapıp tekrar deneyin.

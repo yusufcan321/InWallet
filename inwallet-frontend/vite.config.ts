@@ -9,10 +9,14 @@ export default defineConfig({
       '/api/ai': {
         target: 'http://localhost:8081',
         changeOrigin: true,
+        timeout: 60000,
+        proxyTimeout: 60000,
       },
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        timeout: 60000,
+        proxyTimeout: 60000,
       },
     },
   },

@@ -9,7 +9,7 @@ import { assetApi, goalApi, userApi, marketApi, transactionApi } from '../servic
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
 
 const Dashboard: React.FC = () => {
-  const { userId, username } = useAuth();
+  const { userId, username, logout } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isGoalsModalOpen, setIsGoalsModalOpen] = useState(false);
   const [scheduledModalType, setScheduledModalType] = useState<'debt' | 'receivable' | null>(null);
@@ -117,7 +117,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => handleNavigate('settings')} className="btn-secondary" style={{ padding: '8px 18px' }}>Profilim</button>
+          <button onClick={() => handleNavigate('profile')} className="btn-secondary" style={{ padding: '8px 18px' }}>Profilim</button>
           <button onClick={logout} className="btn-danger" style={{ padding: '8px 18px' }}>Çıkış Yap</button>
         </div>
       </div>
