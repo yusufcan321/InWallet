@@ -15,6 +15,7 @@ const AIChatWidget: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleChat = () => setIsOpen(!isOpen);
 
@@ -98,6 +99,28 @@ const AIChatWidget: React.FC = () => {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImageSend(file);
+    }
+  };
+
+  const handleImageSend = async (imageFile: File) => {
+    setIsLoading(true);
+    setMessages(prev => [...prev, { sender: 'user', text: '📷 (Görsel analiz ediliyor...)' }]);
+    try {
+      const responseText = await aiApi.chatWithImage(userId ?? 1, imageFile, input);
+      setMessages(prev => [...prev, { sender: 'ai', text: responseText }]);
+      setInput('');
+    } catch (err) {
+      setMessages(prev => [...prev, { sender: 'error', text: 'Görsel analiz edilirken bir hata oluştu.' }]);
+    } finally {
+      setIsLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="ai-chat-wrapper">
       {isOpen && (
@@ -173,6 +196,23 @@ const AIChatWidget: React.FC = () => {
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isLoading || isRecording}
               />
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageSelect}
+                accept="image/*"
+                style={{ display: 'none' }}
+              />
+              <button 
+                type="button" 
+                className="attach-btn" 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading || isRecording}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                </svg>
+              </button>
               <button type="submit" disabled={!input.trim() || isLoading || isRecording} className="send-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="22" y1="2" x2="11" y2="13"></line>

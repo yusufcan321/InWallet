@@ -5,7 +5,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
+import org.springframework.util.StreamUtils;
 
 @Service
 public class AIAssistantService {
@@ -23,6 +26,10 @@ public class AIAssistantService {
     }
 
     public String chatWithAgent(String userMessage, Long userId) {
+        return chatWithAgent(userMessage, userId, null);
+    }
+
+    public String chatWithAgent(String userMessage, Long userId, Resource imageResource) {
         try {
             // Fetch all context data in parallel
             CompletableFuture<String> portfolioFuture = CompletableFuture.supplyAsync(() -> fetchData(portfolioServiceUrl + "/api/assets/user/" + userId));
@@ -42,7 +49,11 @@ public class AIAssistantService {
                 HEDEFLER: %s
                 İŞLEMLER: %s
                 
-                Bu verilere dayanarak kullanıcının sorularını yanıtla. Portföy analizi yap, tasarruf önerileri ver veya enflasyon riskini hesapla.
+                GÖREVİN:
+                1. Kullanıcının sorularını yanıtla ve portföy analizi yap.
+                2. Eğer kullanıcı bir FİŞ veya FATURA fotoğrafı gönderdiyse, bu görseldeki Harcama Yerini, Tutarı, Tarihi ve Kategoriyi tespit et.
+                3. Tespit ettiğin harcamayı "Şu fişi okudum: [Harcama Yeri], [Tutar] TL. Kaydetmemi ister misin?" şeklinde sor.
+                
                 Yanıtların profesyonel, motive edici ve finansal açıdan tutarlı olsun.
                 Yasal Uyarı: Burada yer alan yatırım bilgi, yorum ve tavsiyeleri yatırım danışmanlığı kapsamında değildir.
                 """.formatted(portfolio, goals, transactions);
@@ -50,13 +61,25 @@ public class AIAssistantService {
             // Direct Call to Google Gemini API (REST)
             String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + geminiApiKey;
 
+            List<Map<String, Object>> parts = new java.util.ArrayList<>();
+            parts.add(Map.of("text", systemPromptText + "\n\nKullanıcı Mesajı: " + userMessage));
+
+            if (imageResource != null) {
+                byte[] imageBytes = org.springframework.util.StreamUtils.copyToByteArray(imageResource.getInputStream());
+                String base64Image = java.util.Base64.getEncoder().encodeToString(imageBytes);
+                parts.add(Map.of(
+                    "inline_data", Map.of(
+                        "mime_type", "image/jpeg",
+                        "data", base64Image
+                    )
+                ));
+            }
+
             Map<String, Object> requestBody = Map.of(
                 "contents", List.of(
                     Map.of(
                         "role", "user",
-                        "parts", List.of(
-                            Map.of("text", systemPromptText + "\n\nKullanıcı Mesajı: " + userMessage)
-                        )
+                        "parts", parts
                     )
                 ),
                 "generationConfig", Map.of(
@@ -76,8 +99,8 @@ public class AIAssistantService {
                 List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
                 if (!candidates.isEmpty()) {
                     Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
-                    List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
-                    return (String) parts.get(0).get("text");
+                    List<Map<String, Object>> resParts = (List<Map<String, Object>>) content.get("parts");
+                    return (String) resParts.get(0).get("text");
                 }
             }
             
@@ -101,5 +124,9 @@ public class AIAssistantService {
 
     public String chatWithVoice(Resource audioResource, Long userId) {
         return chatWithAgent("Sesli mesaj gönderildi.", userId);
+    }
+
+    public String chatWithImage(Resource imageResource, String message, Long userId) {
+        return chatWithAgent(message != null ? message : "Bu görseli analiz et.", userId, imageResource);
     }
 }

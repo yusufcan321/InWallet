@@ -266,6 +266,20 @@ export const aiApi = {
     if (!res.ok) throw new Error('AI sesli yanıt veremedi.');
     return res.text();
   },
+
+  chatWithImage: async (userId: number, imageFile: File, message?: string) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('userId', userId.toString());
+    if (message) formData.append('message', message);
+
+    const res = await fetch(`${AI_URL}/api/ai/chat/image`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) throw new Error('AI görseli analiz edemedi.');
+    return res.text();
+  },
 };
 
 // ─── Market Data Endpoint ────────────────────────────────

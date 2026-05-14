@@ -42,4 +42,23 @@ public class AIChatController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    @PostMapping(value = "/chat/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> chatWithImage(@RequestParam(value = "image", required = true) MultipartFile imageFile,
+                                                @RequestParam(value = "message", required = false) String message,
+                                                @RequestParam("userId") Long userId) {
+        try {
+            Resource imageResource = imageFile.getResource();
+            String responseText = aiAssistantService.chatWithImage(imageResource, message, userId);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.valueOf("text/plain;charset=UTF-8"));
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(responseText);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Hata: " + e.getMessage());
+        }
+    }
 }
