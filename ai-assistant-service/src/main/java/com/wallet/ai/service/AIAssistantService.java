@@ -31,7 +31,6 @@ public class AIAssistantService {
 
     public String chatWithAgent(String userMessage, Long userId, Resource imageResource) {
         try {
-            // Fetch all context data in parallel
             CompletableFuture<String> portfolioFuture = CompletableFuture.supplyAsync(() -> fetchData(portfolioServiceUrl + "/api/assets/user/" + userId));
             CompletableFuture<String> goalsFuture = CompletableFuture.supplyAsync(() -> fetchData(portfolioServiceUrl + "/api/goals/user/" + userId));
             CompletableFuture<String> transactionsFuture = CompletableFuture.supplyAsync(() -> fetchData(portfolioServiceUrl + "/api/transactions/user/" + userId));
@@ -52,13 +51,12 @@ public class AIAssistantService {
                 GÖREVİN:
                 1. Kullanıcının sorularını yanıtla ve portföy analizi yap.
                 2. Eğer kullanıcı bir FİŞ veya FATURA fotoğrafı gönderdiyse, bu görseldeki Harcama Yerini, Tutarı, Tarihi ve Kategoriyi tespit et.
-                3. Tespit ettiğin harcamayı "Şu fişi okudum: [Harcama Yeri], [Tutar] TL. Kaydetmemi ister misin?" şeklinde sor.
+                3. Harcamayı kaydetmek için 'saveTransaction' aracını kullanabilirsin. Kullanıcı onay verdiğinde veya doğrudan "kaydet" dediğinde bu aracı çağır.
                 
                 Yanıtların profesyonel, motive edici ve finansal açıdan tutarlı olsun.
                 Yasal Uyarı: Burada yer alan yatırım bilgi, yorum ve tavsiyeleri yatırım danışmanlığı kapsamında değildir.
                 """.formatted(portfolio, goals, transactions);
 
-            // Direct Call to Google Gemini API (REST)
             String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + geminiApiKey;
 
             List<Map<String, Object>> parts = new java.util.ArrayList<>();
@@ -75,19 +73,30 @@ public class AIAssistantService {
                 ));
             }
 
-            Map<String, Object> requestBody = Map.of(
-                "contents", List.of(
+            List<Map<String, Object>> tools = List.of(
+                Map.of("function_declarations", List.of(
                     Map.of(
-                        "role", "user",
-                        "parts", parts
+                        "name", "saveTransaction",
+                        "description", "Gelir veya gider işlemini (fiş/fatura verilerini) sisteme kaydeder.",
+                        "parameters", Map.of(
+                            "type", "OBJECT",
+                            "properties", Map.of(
+                                "userId", Map.of("type", "NUMBER", "description", "Kullanıcının ID'si"),
+                                "type", Map.of("type", "STRING", "description", "İşlem türü: INCOME veya EXPENSE"),
+                                "description", Map.of("type", "STRING", "description", "Harcama açıklaması veya yer ismi"),
+                                "category", Map.of("type", "STRING", "description", "Harcama kategorisi"),
+                                "amount", Map.of("type", "NUMBER", "description", "Harcama tutarı")
+                            ),
+                            "required", List.of("userId", "type", "description", "amount")
+                        )
                     )
-                ),
-                "generationConfig", Map.of(
-                    "temperature", 0.7,
-                    "topP", 0.95,
-                    "maxOutputTokens", 2048
-                )
+                ))
             );
+
+            Map<String, Object> requestBody = new java.util.HashMap<>();
+            requestBody.put("contents", List.of(Map.of("role", "user", "parts", parts)));
+            requestBody.put("tools", tools);
+            requestBody.put("generationConfig", Map.of("temperature", 0.7, "maxOutputTokens", 2048));
 
             Map<String, Object> response = restClient.post()
                     .uri(url)
@@ -100,7 +109,19 @@ public class AIAssistantService {
                 if (!candidates.isEmpty()) {
                     Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
                     List<Map<String, Object>> resParts = (List<Map<String, Object>>) content.get("parts");
-                    return (String) resParts.get(0).get("text");
+                    Map<String, Object> firstPart = resParts.get(0);
+                    
+                    if (firstPart.containsKey("functionCall")) {
+                        Map<String, Object> functionCall = (Map<String, Object>) firstPart.get("functionCall");
+                        String functionName = (String) functionCall.get("name");
+                        Map<String, Object> args = (Map<String, Object>) functionCall.get("args");
+                        
+                        if ("saveTransaction".equals(functionName)) {
+                            return executeSaveTransaction(args, userId);
+                        }
+                    }
+                    
+                    return (String) firstPart.get("text");
                 }
             }
             
@@ -108,6 +129,28 @@ public class AIAssistantService {
 
         } catch (Exception e) {
             return "AI Servis Hatası: " + e.getMessage();
+        }
+    }
+
+    private String executeSaveTransaction(Map<String, Object> args, Long userId) {
+        try {
+            Map<String, Object> body = Map.of(
+                "user", Map.of("id", userId),
+                "type", args.getOrDefault("type", "EXPENSE"),
+                "description", args.get("description"),
+                "category", args.getOrDefault("category", "Genel"),
+                "amount", new java.math.BigDecimal(args.get("amount").toString())
+            );
+
+            restClient.post()
+                    .uri(portfolioServiceUrl + "/api/transactions")
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+            
+            return "Tamamdır! Fişteki harcamayı (" + args.get("description") + ", " + args.get("amount") + " TL) başarıyla cüzdanınıza kaydettim. ✅";
+        } catch (Exception e) {
+            return "Harcamayı kaydederken bir sorun oluştu: " + e.getMessage();
         }
     }
 
