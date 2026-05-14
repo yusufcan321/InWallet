@@ -50,8 +50,11 @@ public class AIAssistantService {
                 
                 GÖREVİN:
                 1. Kullanıcının sorularını yanıtla ve portföy analizi yap.
-                2. Eğer kullanıcı bir FİŞ veya FATURA fotoğrafı gönderdiyse, bu görseldeki Harcama Yerini, Tutarı, Tarihi ve Kategoriyi tespit et.
-                3. Harcamayı kaydetmek için 'saveTransaction' aracını kullanabilirsin. Kullanıcı onay verdiğinde veya doğrudan "kaydet" dediğinde bu aracı çağır.
+                2. Kullanıcı bir FİŞ veya FATURA fotoğrafı gönderdiğinde; Harcama Yerini, Tutarı ve Kategoriyi GÖRSELden kendin tespit et.
+                3. Tespit ettiğin bu verilerle 'saveTransaction' aracını HİÇ BEKLEMEDEN ve kullanıcıya soru sormadan otomatik olarak çağır.
+                4. İşlem bittikten sonra kullanıcıya "Fişinizi okudum, [Tutar] TL tutarındaki [Harcama Yeri] harcamasını başarıyla kaydettim" şeklinde bilgi ver.
+                
+                KESİNLİKLE tutar veya kategori sorma, görselden ne görüyorsan onu kullan. Görsel net değilse tahmin yürüt veya en yakın kategoriyi seç.
                 
                 Yanıtların profesyonel, motive edici ve finansal açıdan tutarlı olsun.
                 Yasal Uyarı: Burada yer alan yatırım bilgi, yorum ve tavsiyeleri yatırım danışmanlığı kapsamında değildir.
