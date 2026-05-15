@@ -17,12 +17,17 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class AssetService {
 
     private final AssetRepository assetRepository;
     private final MarketDataService marketDataService;
     private final AssetEventProducer assetEventProducer;
+
+    public AssetService(AssetRepository assetRepository, MarketDataService marketDataService, AssetEventProducer assetEventProducer) {
+        this.assetRepository = assetRepository;
+        this.marketDataService = marketDataService;
+        this.assetEventProducer = assetEventProducer;
+    }
 
     @Cacheable(value = "assets", key = "#userId")
     public List<Asset> getAssetsByUserId(Long userId) {

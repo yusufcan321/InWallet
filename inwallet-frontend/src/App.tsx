@@ -12,12 +12,15 @@ import Portfolio from './pages/Portfolio';
 import Transactions from './pages/Transactions';
 import Goals from './pages/Goals';
 import Settings from './pages/Settings';
+import News from './pages/News';
+import InWalletAgent from './pages/InWalletAgent';
 import DCAPlanner from './pages/DCAPlanner';
 import EmergencyFund from './pages/EmergencyFund';
 import Market from './pages/Market';
 import RecurringTransactions from './pages/RecurringTransactions';
 import Profile from './pages/Profile';
 import InflationDefense from './components/InflationDefense';
+import FinancialSimulator from './components/FinancialSimulator';
 
 const AppContent: React.FC = () => {
   const { isLoggedIn, username, firstName, lastName } = useAuth();
@@ -56,6 +59,7 @@ const AppContent: React.FC = () => {
           {(() => {
             switch(currentView) {
               case 'dashboard':  return <Dashboard />;
+              case 'agent':      return <InWalletAgent />;
               case 'portfolio':  return <Portfolio />;
               case 'market':     return <Market />;
               case 'transactions': return <Transactions />;
@@ -64,7 +68,9 @@ const AppContent: React.FC = () => {
               case 'dca':        return <DCAPlanner />;
               case 'inflation':  return <InflationDefense />;
               case 'emergency':  return <EmergencyFund />;
+              case 'news':       return <News />;
               case 'profile':    return <Profile />;
+              case 'simulator':  return <FinancialSimulator />;
               case 'settings':   return <Settings />;
               default:           return <Dashboard />;
             }
@@ -174,9 +180,13 @@ const AppContent: React.FC = () => {
   );
 }
 
+import { NotificationProvider } from './context/NotificationContext';
+
 const App: React.FC = () => (
   <AuthProvider>
-    <AppContent />
+    <NotificationProvider>
+      <AppContent />
+    </NotificationProvider>
   </AuthProvider>
 );
 

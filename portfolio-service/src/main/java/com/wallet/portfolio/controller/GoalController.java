@@ -10,11 +10,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/goals")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class GoalController {
 
     private final GoalService goalService;
+
+    public GoalController(GoalService goalService) {
+        this.goalService = goalService;
+    }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Goal>> getGoalsByUserId(@PathVariable Long userId) {

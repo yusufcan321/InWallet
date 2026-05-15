@@ -12,12 +12,17 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class GoalService {
 
     private final GoalRepository goalRepository;
     private final EmailService emailService;
     private final com.wallet.portfolio.repository.AssetRepository assetRepository;
+
+    public GoalService(GoalRepository goalRepository, EmailService emailService, com.wallet.portfolio.repository.AssetRepository assetRepository) {
+        this.goalRepository = goalRepository;
+        this.emailService = emailService;
+        this.assetRepository = assetRepository;
+    }
 
     public List<Goal> getGoalsByUserId(Long userId) {
         List<Goal> goals = goalRepository.findByUserId(userId);

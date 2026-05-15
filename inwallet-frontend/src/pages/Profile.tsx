@@ -95,42 +95,42 @@ const Profile: React.FC = () => {
         )}
 
         <form onSubmit={handleSave} style={{ maxWidth: '800px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-            <div>
-              <label className="input-label">AD</label>
-              <input className="form-input" type="text" value={editFirstName} onChange={e => setEditFirstName(e.target.value)} placeholder="Adınız" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label className="input-label" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>AD</label>
+              <input className="form-input" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} type="text" value={editFirstName} onChange={e => setEditFirstName(e.target.value)} placeholder="Adınız" />
             </div>
-            <div>
-              <label className="input-label">SOYAD</label>
-              <input className="form-input" type="text" value={editLastName} onChange={e => setEditLastName(e.target.value)} placeholder="Soyadınız" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label className="input-label" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>SOYAD</label>
+              <input className="form-input" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} type="text" value={editLastName} onChange={e => setEditLastName(e.target.value)} placeholder="Soyadınız" />
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-            <div>
-              <label className="input-label">KULLANICI ADI</label>
-              <input className="form-input" type="text" value={editUsername} onChange={e => setEditUsername(e.target.value)} required />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label className="input-label" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>KULLANICI ADI</label>
+              <input className="form-input" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} type="text" value={editUsername} onChange={e => setEditUsername(e.target.value)} required />
             </div>
-            <div>
-              <label className="input-label">E-POSTA</label>
-              <input className="form-input" type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label className="input-label" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>E-POSTA</label>
+              <input className="form-input" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
             </div>
           </div>
 
           <div style={{ marginTop: '40px', paddingTop: '30px', borderTop: '1px solid var(--border-color)' }}>
             <h3 style={{ marginBottom: '20px', fontSize: '18px' }}>Şifre Değiştir</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-              <div>
-                <label className="input-label">MEVCUT ŞİFRE</label>
-                <input className="form-input" type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder="Değiştirmek istemiyorsanız boş bırakın" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label className="input-label" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>MEVCUT ŞİFRE</label>
+                <input className="form-input" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder="Değiştirmek istemiyorsanız boş bırakın" />
               </div>
-              <div>
-                <label className="input-label">YENİ ŞİFRE</label>
-                <input className="form-input" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label className="input-label" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>YENİ ŞİFRE</label>
+                <input className="form-input" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
               </div>
-              <div>
-                <label className="input-label">YENİ ŞİFRE (TEKRAR)</label>
-                <input className="form-input" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label className="input-label" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>YENİ ŞİFRE (TEKRAR)</label>
+                <input className="form-input" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
               </div>
             </div>
           </div>

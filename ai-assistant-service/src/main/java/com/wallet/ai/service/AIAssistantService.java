@@ -17,9 +17,6 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class AIAssistantService {
 
-    private final RestClient portfolioRestClient;
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     @Value("${GEMINI_API_KEY}")
     private String geminiApiKey;
 
@@ -46,10 +43,16 @@ public class AIAssistantService {
 
     private static final int MAX_FAILURES   = 3;
 
+    private final RestClient portfolioRestClient;
+    private final com.wallet.ai.kafka.MarketPriceAlertConsumer alertConsumer;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     public AIAssistantService(
-            @Qualifier("portfolioRestClient") RestClient portfolioRestClient
+            @Qualifier("portfolioRestClient") RestClient portfolioRestClient,
+            com.wallet.ai.kafka.MarketPriceAlertConsumer alertConsumer
     ) {
         this.portfolioRestClient = portfolioRestClient;
+        this.alertConsumer = alertConsumer;
     }
 
     public String chatWithAgent(String userMessage, Long userId) {
@@ -57,6 +60,16 @@ public class AIAssistantService {
     }
 
     public String chatWithAgent(String userMessage, Long userId, Resource imageResource) {
+        return chatWithAgent(userMessage, userId, imageResource, false);
+    }
+
+    public String generateAutonomousInsight(Long userId) {
+        String prompt = "Kullanıcının mevcut finansal verilerini analiz et ve ona bugün için 'Aksiyon Alınabilir' 3 stratejik öneri sun. " +
+                "Kısa, öz ve agentic bir dille konuş. Verileri sorgulamak için araçlarını kullanabilirsin.";
+        return chatWithAgent(prompt, userId, null, true);
+    }
+
+    private String chatWithAgent(String userMessage, Long userId, Resource imageResource, boolean autonomousMode) {
         try {
             CompletableFuture<String> contextFuture  = CompletableFuture.supplyAsync(() ->
                     fetchData("/api/financial-health/" + userId + "/ai-context"));
@@ -70,8 +83,9 @@ public class AIAssistantService {
             String aiContext = contextFuture.join();
             String goals     = goalsFuture.join();
             String market    = marketFuture.join();
+            String alerts    = alertConsumer.getLatestAlerts().toString();
 
-            String systemInstruction = buildSystemPrompt(userId, aiContext, goals, market);
+            String systemInstruction = buildSystemPrompt(userId, aiContext, goals, market, alerts, autonomousMode);
             List<Map<String, Object>> tools = buildToolDefinitions();
 
             Map<String, Object> requestBody = buildRequest(systemInstruction, userMessage, tools, null, imageResource);
@@ -86,13 +100,18 @@ public class AIAssistantService {
         }
     }
 
-    private String buildSystemPrompt(Long userId, String aiContext, String goals, String market) {
-        return """
+    private String buildSystemPrompt(Long userId, String aiContext, String goals, String market, String alerts, boolean autonomousMode) {
+        String basePrompt = """
                 Sen InWallet'in uzman finansal asistanısın. Görevin, kullanıcının verilerini analiz ederek \
                 ona özel tasarruf ve yatırım stratejileri sunmaktır.
                 
                 ═══════════════════════════════════════
                 AKTÜEL PİYASA DURUMU (REFERANS)
+                ═══════════════════════════════════════
+                %s
+                
+                ═══════════════════════════════════════
+                SON PİYASA UYARILARI (VOLATİLİTE)
                 ═══════════════════════════════════════
                 %s
                 
@@ -123,7 +142,20 @@ public class AIAssistantService {
                    "NOT: Bu bilgiler yatırım tavsiyesi değildir." uyarısını ekle.
                 9. TONLAMA: Profesyonel ama cana yakın, motive edici bir finansal koç gibi davran.
                 10. DİL: Tamamen Türkçe konuş.
-                """.formatted(market, userId, aiContext, goals);
+                """;
+
+        if (autonomousMode) {
+            basePrompt += """
+                    
+                    ÖZEL MOD: OTONOM ANALİZ
+                    Şu an kullanıcının dashboard'u için otonom bir özet hazırlıyorsun. 
+                    - Çok kısa ve vurucu ol.
+                    - "Günaydın" veya "Selam" gibi girişler yerine direkt aksiyon odaklı başla.
+                    - Kullanıcının en büyük finansal açığını veya en iyi fırsatını bul.
+                    """;
+        }
+
+        return basePrompt.formatted(market, alerts, userId, aiContext, goals);
     }
 
     @SuppressWarnings("unchecked")
@@ -265,6 +297,35 @@ public class AIAssistantService {
                     portfolioRestClient.post().uri("/api/goals").body(body).retrieve().toBodilessEntity();
                     yield "✅ Hedef başarıyla oluşturuldu: " + goalName;
                 }
+                case "simulate_scenario" -> {
+                    String action = (String) args.getOrDefault("action", "expense");
+                    double amount = Double.parseDouble(args.getOrDefault("amount", "0").toString());
+                    int years     = Integer.parseInt(args.getOrDefault("years", "5").toString());
+                    double rate    = Double.parseDouble(args.getOrDefault("expectedReturnRate", "0.20").toString());
+
+                    // Basit bir gelecek değer projeksiyonu (Bileşik getiri kaybı veya kazancı)
+                    double futureValue = amount * Math.pow(1 + rate, years);
+                    String result = String.format("📊 Simülasyon Sonucu: %d yıl sonunda bu işlemin kümülatif etkisi ₺%.2f olacaktır. ", years, futureValue);
+                    
+                    if ("expense".equalsIgnoreCase(action)) {
+                        result += "Bu tutarı şu an harcamak, gelecekteki potansiyel yatırım kazancınızdan feragat etmek anlamına gelir.";
+                    } else {
+                        result += "Bu yatırım düzenli yapılırsa hedeflerinize ulaşma sürenizi kısaltacaktır.";
+                    }
+                    yield result;
+                }
+                case "calculate_inflation_adjusted_goal" -> {
+                    double currentPrice = Double.parseDouble(args.getOrDefault("currentPrice", "0").toString());
+                    int years = Integer.parseInt(args.getOrDefault("years", "1").toString());
+                    double inflationRate = Double.parseDouble(args.getOrDefault("annualInflationRate", "0.45").toString());
+                    
+                    double futurePrice = currentPrice * Math.pow(1 + inflationRate, years);
+                    double monthlySavings = futurePrice / (years * 12);
+                    
+                    yield String.format("🎯 Enflasyon Düzeltilmiş Hedef: Bugün ₺%.2f olan bir hedef, %%%.0f enflasyon ile %d yıl sonra ₺%.2f olacaktır. " +
+                            "Bu hedefe ulaşmak için aylık yaklaşık ₺%.2f tasarruf yapmalısınız.", 
+                            currentPrice, inflationRate * 100, years, futurePrice, monthlySavings);
+                }
                 default -> "Bilinmeyen fonksiyon: " + name;
             };
         } catch (Exception e) {
@@ -323,6 +384,29 @@ public class AIAssistantService {
                                         "deadline",     Map.of("type", "STRING", "description", "Bitiş tarihi YYYY-MM-DD")
                                 ),
                                 "required", List.of("name", "targetAmount", "deadline")
+                        )),
+                Map.of("name", "simulate_scenario",
+                        "description", "Finansal bir kararın (harcama veya yatırım) gelecekteki etkisini simüle eder.",
+                        "parameters", Map.of(
+                                "type", "OBJECT",
+                                "properties", Map.of(
+                                        "action",             Map.of("type", "STRING", "description", "expense veya investment"),
+                                        "amount",             Map.of("type", "NUMBER", "description", "İşlem tutarı"),
+                                        "years",              Map.of("type", "NUMBER", "description", "Simülasyon süresi (yıl)"),
+                                        "expectedReturnRate", Map.of("type", "NUMBER", "description", "Beklenen yıllık getiri oranı (Örn: 0.25)")
+                                ),
+                                "required", List.of("action", "amount", "years")
+                        )),
+                Map.of("name", "calculate_inflation_adjusted_goal",
+                        "description", "Bir hedefin enflasyon karşısındaki gelecek değerini ve gereken tasarruf miktarını hesaplar.",
+                        "parameters", Map.of(
+                                "type", "OBJECT",
+                                "properties", Map.of(
+                                        "currentPrice",         Map.of("type", "NUMBER", "description", "Hedefin bugünkü fiyatı (TL)"),
+                                        "years",                Map.of("type", "NUMBER", "description", "Hedefe kaç yıl sonra ulaşılacak?"),
+                                        "annualInflationRate",  Map.of("type", "NUMBER", "description", "Yıllık beklenen enflasyon oranı (Örn: 0.55)")
+                                ),
+                                "required", List.of("currentPrice", "years")
                         ))
         )));
     }

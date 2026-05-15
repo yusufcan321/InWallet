@@ -28,9 +28,11 @@ public class MarketDataService {
     private final Map<String, BigDecimal> currentPrices = new ConcurrentHashMap<>();
     private final RestTemplate restTemplate = new RestTemplate();
     private final AssetRepository assetRepository;
+    private final com.wallet.portfolio.kafka.MarketPriceAlertProducer alertProducer;
 
-    public MarketDataService(AssetRepository assetRepository) {
+    public MarketDataService(AssetRepository assetRepository, com.wallet.portfolio.kafka.MarketPriceAlertProducer alertProducer) {
         this.assetRepository = assetRepository;
+        this.alertProducer = alertProducer;
         // Varsayılan fiyatlar
         currentPrices.put("XAU", new BigDecimal("2450.00"));
         currentPrices.put("AAPL", new BigDecimal("185.00"));
@@ -53,9 +55,23 @@ public class MarketDataService {
 
         for (String symbol : userSymbols) {
             try {
-                BigDecimal price = fetchPriceWithResilience(formatToYahooSymbol(symbol));
-                if (price != null) {
-                    currentPrices.put(symbol, price);
+                BigDecimal oldPrice = currentPrices.get(symbol);
+                BigDecimal newPrice = fetchPriceWithResilience(formatToYahooSymbol(symbol));
+                
+                if (newPrice != null) {
+                    currentPrices.put(symbol, newPrice);
+                    
+                    if (oldPrice != null && oldPrice.compareTo(BigDecimal.ZERO) > 0) {
+                        double diff = newPrice.subtract(oldPrice).doubleValue();
+                        double pctChange = (diff / oldPrice.doubleValue()) * 100;
+                        
+                        if (Math.abs(pctChange) >= 2.0) { // %2 ve üzeri değişimlerde alert
+                            com.wallet.portfolio.dto.MarketPriceAlertEvent event = new com.wallet.portfolio.dto.MarketPriceAlertEvent(
+                                symbol, oldPrice, newPrice, Math.round(pctChange * 100.0) / 100.0, System.currentTimeMillis()
+                            );
+                            alertProducer.sendAlert(event);
+                        }
+                    }
                 }
             } catch (Exception e) {
                 LOGGER.warn("Veri çekilemedi: {} -> {}", symbol, e.getMessage());

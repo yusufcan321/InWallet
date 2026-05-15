@@ -9,11 +9,14 @@ import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/financial-health")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class FinancialHealthController {
 
     private final FinancialHealthService financialHealthService;
+
+    public FinancialHealthController(FinancialHealthService financialHealthService) {
+        this.financialHealthService = financialHealthService;
+    }
 
     /** Finansal Sağlık Skoru — 5 metrik, piyasa bağlamı */
     @GetMapping("/{userId}")

@@ -12,12 +12,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class FinancialHealthService {
 
     private final TransactionService transactionService;
     private final AssetService assetService;
     private final MarketDataService marketDataService;
+
+    public FinancialHealthService(TransactionService transactionService, AssetService assetService, MarketDataService marketDataService) {
+        this.transactionService = transactionService;
+        this.assetService = assetService;
+        this.marketDataService = marketDataService;
+    }
 
     // Ağırlıklar (toplam = 100)
     private static final double W_SAVINGS = 0.30;

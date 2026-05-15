@@ -76,6 +76,17 @@ const AIChatWidget: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
+  useEffect(() => {
+    const handleGlobalToggle = (e: any) => {
+      setIsOpen(true);
+      if (e.detail && e.detail.prompt) {
+        setTimeout(() => sendMessage(undefined, e.detail.prompt), 300);
+      }
+    };
+    window.addEventListener('toggle-ai-chat', handleGlobalToggle);
+    return () => window.removeEventListener('toggle-ai-chat', handleGlobalToggle);
+  }, []);
+
   // ─── Metin Gönder ──────────────────────────────────────────────────────────
   const sendMessage = async (e?: React.FormEvent, overrideText?: string) => {
     if (e) e.preventDefault();

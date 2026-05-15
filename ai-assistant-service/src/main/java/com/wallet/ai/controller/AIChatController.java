@@ -25,6 +25,12 @@ public class AIChatController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/insight")
+    public ResponseEntity<String> getInsight(@RequestParam Long userId) {
+        String insight = aiAssistantService.generateAutonomousInsight(userId);
+        return ResponseEntity.ok(insight);
+    }
+
     @PostMapping(value = "/chat/audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> chatWithVoice(@RequestParam("audio") MultipartFile audioFile, 
                                                 @RequestParam("userId") Long userId) {

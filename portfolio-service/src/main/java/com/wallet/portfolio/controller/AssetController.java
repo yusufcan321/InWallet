@@ -10,11 +10,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/assets")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class AssetController {
 
     private final AssetService assetService;
+
+    public AssetController(AssetService assetService) {
+        this.assetService = assetService;
+    }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Asset>> getAssetsByUserId(@PathVariable Long userId) {

@@ -9,11 +9,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class BudgetService {
 
     private final com.wallet.portfolio.repository.TransactionRepository transactionRepository;
     private final BudgetRepository budgetRepository;
+
+    public BudgetService(com.wallet.portfolio.repository.TransactionRepository transactionRepository, BudgetRepository budgetRepository) {
+        this.transactionRepository = transactionRepository;
+        this.budgetRepository = budgetRepository;
+    }
 
     public List<Budget> getBudgetsByUserId(Long userId) {
         return budgetRepository.findByUserId(userId);
