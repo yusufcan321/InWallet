@@ -33,6 +33,9 @@ public class AIAgentToolsConfig {
     public record CreateGoalRequest(Long userId, String name, BigDecimal targetAmount, String deadline) {}
     public record CreateGoalResponse(String message) {}
 
+    public record SaveTransactionRequest(Long userId, String type, String description, String category, BigDecimal amount) {}
+    public record SaveTransactionResponse(boolean success, String message) {}
+
     // ─── Shared RestClient bean ────────────────────────────────────────────────
     @Bean
     public RestClient portfolioRestClient(RestClient.Builder builder) {
@@ -149,4 +152,32 @@ public class AIAgentToolsConfig {
             }
         };
     }
+
+    @Bean
+    @Description("Gelir veya gider işlemini (örn. bir fişten okunan harcamayı) sisteme kaydeder.")
+    public Function<SaveTransactionRequest, SaveTransactionResponse> saveTransaction(RestClient portfolioRestClient) {
+        return request -> {
+            try {
+                Map<String, Object> body = Map.of(
+                    "user", Map.of("id", request.userId()),
+                    "type", request.type(),
+                    "description", request.description(),
+                    "category", request.category(),
+                    "amount", request.amount(),
+                    "date", OffsetDateTime.now().toString()
+                );
+
+                portfolioRestClient.post()
+                        .uri("/api/transactions")
+                        .body(body)
+                        .retrieve()
+                        .toBodilessEntity();
+                
+                return new SaveTransactionResponse(true, "İşlem başarıyla kaydedildi.");
+            } catch (Exception e) {
+                return new SaveTransactionResponse(false, "İşlem kaydedilemedi: " + e.getMessage());
+            }
+        };
+    }
 }
+

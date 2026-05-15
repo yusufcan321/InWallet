@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.util.StreamUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -52,6 +53,10 @@ public class AIAssistantService {
     }
 
     public String chatWithAgent(String userMessage, Long userId) {
+        return chatWithAgent(userMessage, userId, null);
+    }
+
+    public String chatWithAgent(String userMessage, Long userId, Resource imageResource) {
         try {
             CompletableFuture<String> contextFuture  = CompletableFuture.supplyAsync(() ->
                     fetchData("/api/financial-health/" + userId + "/ai-context"));
@@ -69,10 +74,10 @@ public class AIAssistantService {
             String systemInstruction = buildSystemPrompt(userId, aiContext, goals, market);
             List<Map<String, Object>> tools = buildToolDefinitions();
 
-            Map<String, Object> requestBody = buildRequest(systemInstruction, userMessage, tools, null);
+            Map<String, Object> requestBody = buildRequest(systemInstruction, userMessage, tools, null, imageResource);
             Map<String, Object> response    = callGeminiWithCircuitBreaker(requestBody);
 
-            String finalText = processFunctionCalls(response, tools, systemInstruction, userMessage, userId, 0);
+            String finalText = processFunctionCalls(response, tools, systemInstruction, userMessage, userId, 0, imageResource);
 
             return finalText != null ? finalText : "Üzgünüm, şu an yanıt oluşturamıyorum.";
 
@@ -98,22 +103,26 @@ public class AIAssistantService {
                 Hedefler: %s
                 
                 ═══════════════════════════════════════
-                KOMUTLAR VE DAVRANIŞ KURALLARI
+                GÖREVLER VE DAVRANIŞ KURALLARI
                 ═══════════════════════════════════════
                 1. KİŞİSELLEŞTİRİLMİŞ ANALİZ: Sadece genel tavsiyeler verme. Kullanıcının tasarruf oranını, \
                    harcamalarını ve varlık dağılımını kullanarak "Senin durumunda en mantıklı adım..." \
                    şeklinde kişiye özel konuş.
-                2. TASARRUF PLANI: Eğer kullanıcı tasarruf etmek isterse, harcama kategorilerine bakarak \
+                2. FİŞ / FATURA ANALİZİ: Kullanıcı bir FİŞ veya FATURA fotoğrafı gönderdiğinde; Harcama Yerini, \
+                   Tutarı ve Kategoriyi GÖRSELden kendin tespit et.
+                3. OTOMATİK KAYIT: Tespit ettiğin bu verilerle 'save_transaction' aracını HİÇ BEKLEMEDEN ve \
+                   kullanıcıya soru sormadan otomatik olarak çağır. Görsel net değilse tahmin yürüt veya en yakın kategoriyi seç.
+                4. TASARRUF PLANI: Eğer kullanıcı tasarruf etmek isterse, harcama kategorilerine bakarak \
                    somut kısıntı önerileri ve hedefleri belirle.
-                3. PİYASA ENTEGRASYONU: Önerilerini mevcut USD/TRY, Altın veya BIST verileriyle \
+                5. PİYASA ENTEGRASYONU: Önerilerini mevcut USD/TRY, Altın veya BIST verileriyle \
                    destekle (Örn: "Doların şu anki seviyesi göz önüne alındığında...").
-                4. PARA FORMATI: Tüm tutarları ₺ sembolü ile yaz (Örn: ₺15.000,00).
-                5. FONKSİYON KULLANIMI: İşlem kaydı veya veri sorgulama için araçlarını (tools) etkin kullan. \
+                6. PARA FORMATI: Tüm tutarları ₺ sembolü ile yaz (Örn: ₺15.000,00).
+                7. FONKSİYON KULLANIMI: İşlem kaydı veya veri sorgulama için araçlarını (tools) etkin kullan. \
                    İşlem kaydederken kullanıcıdan onay bekleme, direkt kaydet ve bilgi ver.
-                6. YASAL UYARI (KRİTİK): Her yanıtın en başında veya en sonunda belirgin bir şekilde \
+                8. YASAL UYARI (KRİTİK): Her yanıtın en başında veya en sonunda belirgin bir şekilde \
                    "NOT: Bu bilgiler yatırım tavsiyesi değildir." uyarısını ekle.
-                7. TONLAMA: Profesyonel ama cana yakın, motive edici bir finansal koç gibi davran.
-                8. DİL: Tamamen Türkçe konuş.
+                9. TONLAMA: Profesyonel ama cana yakın, motive edici bir finansal koç gibi davran.
+                10. DİL: Tamamen Türkçe konuş.
                 """.formatted(market, userId, aiContext, goals);
     }
 
@@ -166,7 +175,8 @@ public class AIAssistantService {
             String systemInstruction,
             String userMessage,
             Long userId,
-            int depth
+            int depth,
+            Resource imageResource
     ) throws Exception {
         if (depth > 5 || response == null) return null;
 
@@ -205,9 +215,9 @@ public class AIAssistantService {
             ));
         }
 
-        Map<String, Object> nextRequest  = buildRequestWithHistory(systemInstruction, userMessage, content, functionResponses, tools);
+        Map<String, Object> nextRequest  = buildRequestWithHistory(systemInstruction, userMessage, content, functionResponses, tools, imageResource);
         Map<String, Object> nextResponse = callGeminiWithCircuitBreaker(nextRequest);
-        return processFunctionCalls(nextResponse, tools, systemInstruction, userMessage, userId, depth + 1);
+        return processFunctionCalls(nextResponse, tools, systemInstruction, userMessage, userId, depth + 1, imageResource);
     }
 
     private String executeFunction(String name, Map<String, Object> args, Long userId) {
@@ -218,7 +228,7 @@ public class AIAssistantService {
                 case "get_transactions" -> fetchData("/api/transactions/user/" + userId);
                 case "get_health_score" -> fetchData("/api/financial-health/" + userId);
                 case "get_market_prices"-> fetchData("/api/market/prices");
-                case "add_transaction"  -> {
+                case "save_transaction", "add_transaction" -> {
                     Object amtObj = args.get("amount");
                     BigDecimal amount = amtObj instanceof Number
                             ? new BigDecimal(amtObj.toString()) : BigDecimal.ZERO;
@@ -279,6 +289,18 @@ public class AIAssistantService {
                 Map.of("name", "get_market_prices",
                         "description", "Anlık piyasa verilerini getirir: USD/TRY, altın, BIST hisseleri, kripto.",
                         "parameters", Map.of("type", "OBJECT", "properties", Map.of())),
+                Map.of("name", "save_transaction",
+                        "description", "Yeni bir harcama veya gelir (fiş/fatura verilerini) sisteme kaydeder.",
+                        "parameters", Map.of(
+                                "type", "OBJECT",
+                                "properties", Map.of(
+                                        "amount",      Map.of("type", "NUMBER", "description", "İşlem tutarı (TL)"),
+                                        "type",        Map.of("type", "STRING", "description", "EXPENSE veya INCOME"),
+                                        "category",    Map.of("type", "STRING", "description", "Kategori (Market, Fatura, Maaş vb.)"),
+                                        "description", Map.of("type", "STRING", "description", "Harcama yeri veya açıklama")
+                                ),
+                                "required", List.of("amount", "type", "description")
+                        )),
                 Map.of("name", "add_transaction",
                         "description", "Yeni bir harcama (EXPENSE) veya gelir (INCOME) işlemi kaydeder.",
                         "parameters", Map.of(
@@ -307,12 +329,30 @@ public class AIAssistantService {
 
     private Map<String, Object> buildRequest(String systemInstruction, String userMessage,
                                                List<Map<String, Object>> tools,
-                                               List<Map<String, Object>> history) {
+                                               List<Map<String, Object>> history,
+                                               Resource imageResource) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("system_instruction", Map.of("parts", List.of(Map.of("text", systemInstruction))));
         List<Map<String, Object>> contents = new ArrayList<>();
         if (history != null) contents.addAll(history);
-        contents.add(Map.of("role", "user", "parts", List.of(Map.of("text", userMessage))));
+        
+        List<Map<String, Object>> parts = new ArrayList<>();
+        parts.add(Map.of("text", userMessage));
+        
+        if (imageResource != null) {
+            try {
+                byte[] imageBytes = StreamUtils.copyToByteArray(imageResource.getInputStream());
+                String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+                parts.add(Map.of(
+                    "inline_data", Map.of(
+                        "mime_type", "image/jpeg",
+                        "data", base64Image
+                    )
+                ));
+            } catch (Exception ignored) {}
+        }
+
+        contents.add(Map.of("role", "user", "parts", parts));
         body.put("contents", contents);
         body.put("tools", tools);
         body.put("generationConfig", Map.of("temperature", 0.7, "maxOutputTokens", 2048));
@@ -323,10 +363,27 @@ public class AIAssistantService {
             String systemInstruction, String userMessage,
             Map<String, Object> assistantContent,
             List<Map<String, Object>> functionResponses,
-            List<Map<String, Object>> tools
+            List<Map<String, Object>> tools,
+            Resource imageResource
     ) {
         List<Map<String, Object>> history = new ArrayList<>();
-        history.add(Map.of("role", "user", "parts", List.of(Map.of("text", userMessage))));
+        
+        List<Map<String, Object>> userParts = new ArrayList<>();
+        userParts.add(Map.of("text", userMessage));
+        if (imageResource != null) {
+            try {
+                byte[] imageBytes = StreamUtils.copyToByteArray(imageResource.getInputStream());
+                String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+                userParts.add(Map.of(
+                    "inline_data", Map.of(
+                        "mime_type", "image/jpeg",
+                        "data", base64Image
+                    )
+                ));
+            } catch (Exception ignored) {}
+        }
+
+        history.add(Map.of("role", "user", "parts", userParts));
         history.add(assistantContent);
         history.add(Map.of("role", "user", "parts", functionResponses));
 
@@ -365,8 +422,11 @@ public class AIAssistantService {
         }
     }
 
-    public byte[] chatWithVoice(Resource audioFile, Long userId) {
-        String response = chatWithAgent("Sesli mesaj gönderildi.", userId);
-        return response.getBytes();
+    public String chatWithVoice(Resource audioFile, Long userId) {
+        return chatWithAgent("Sesli mesaj gönderildi.", userId);
+    }
+
+    public String chatWithImage(Resource imageResource, String message, Long userId) {
+        return chatWithAgent(message != null ? message : "Bu görseli analiz et.", userId, imageResource);
     }
 }
