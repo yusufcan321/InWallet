@@ -4,6 +4,7 @@ import type { Variants } from 'framer-motion';
 import './Sidebar.css';
 import { useAuth } from '../context/AuthContext';
 import { userApi } from '../services/api';
+import { LayoutDashboard, Briefcase, TrendingUp, Repeat, Calculator, Flame, Receipt, Target, LineChart, User, Settings, LogOut, Sun, Moon, Globe, Newspaper, Sparkles } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,18 +13,7 @@ interface SidebarProps {
   onNavigate: (viewId: string) => void;
 }
 
-const menuItems = [
-  { id: 'dashboard',    label: 'Ana Sayfa',          icon: '🏠', desc: 'Genel özet panosu' },
-  { id: 'portfolio',    label: 'Portföyüm',          icon: '💼', desc: 'Varlıklarınızı inceleyin' },
-  { id: 'market',       label: 'Piyasalar',          icon: '📈', desc: 'Canlı veriler ve yatırım' },
-  { id: 'recurring',    label: 'Otomatik İşlemler',  icon: '🔁', desc: 'Tekrarlayan gelir/gider' },
-  { id: 'dca',          label: 'DCA Planlayıcı',     icon: '💰', desc: 'Düzenli yatırım planı' },
-  { id: 'inflation',    label: 'Enflasyon Savunma',  icon: '🔥', desc: 'Satın alma gücü analizi' },
-  { id: 'transactions', label: 'İşlem Geçmişi',      icon: '📋', desc: 'Gelir ve gider akışı' },
-  { id: 'goals',        label: 'Hedeflerim',         icon: '🎯', desc: 'Hayallerinizi planlayın' },
-  { id: 'profile',      label: 'Profilim',           icon: '👤', desc: 'Bilgilerinizi güncelleyin' },
-  { id: 'settings',     label: 'Ayarlar',            icon: '⚙️', desc: 'Uygulama tercihleri' },
-];
+
 
 
 // ─── Animasyon Varyantları ────────────────────────────────────────────────────
@@ -57,9 +47,28 @@ const navItemVariants: Variants = {
   visible: { opacity: 1, x: 0, transition: { duration: 0.3, ease: 'easeOut' } }
 };
 
+import { useTranslation } from 'react-i18next';
+
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentView, onNavigate }) => {
+  const { t, i18n } = useTranslation();
   const { username, userId, logout } = useAuth();
   const [userData, setUserData] = useState<any>(null);
+
+  const menuItems = [
+    { id: 'dashboard',    label: t('dashboard'),       icon: <LayoutDashboard size={20} /> },
+    { id: 'agent',        label: t('agent'),           icon: <Sparkles size={20} color="var(--accent-blue)" /> },
+    { id: 'portfolio',    label: t('portfolio'),       icon: <Briefcase size={20} /> },
+    { id: 'market',       label: t('market'),          icon: <TrendingUp size={20} /> },
+    { id: 'news',         label: t('news'),            icon: <Newspaper size={20} /> },
+    { id: 'recurring',    label: t('recurring'),       icon: <Repeat size={20} /> },
+    { id: 'dca',          label: t('dca'),             icon: <Calculator size={20} /> },
+    { id: 'inflation',    label: t('inflation'),       icon: <Flame size={20} /> },
+    { id: 'transactions', label: t('transactions'),    icon: <Receipt size={20} /> },
+    { id: 'goals',        label: t('goals'),           icon: <Target size={20} /> },
+    { id: 'simulator',    label: t('simulator'),       icon: <LineChart size={20} /> },
+    { id: 'profile',      label: t('profile'),         icon: <User size={20} /> },
+    { id: 'settings',     label: t('settings'),        icon: <Settings size={20} /> },
+  ];
 
   useEffect(() => {
     if (!userId) return;
@@ -83,6 +92,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentView, onNavig
   }, [theme]);
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  const toggleLanguage = () => {
+    const nextLang = i18n.language === 'tr' ? 'en' : 'tr';
+    i18n.changeLanguage(nextLang);
+  };
 
   return (
     <AnimatePresence>
@@ -184,13 +197,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentView, onNavig
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
+              style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}
             >
-              <button className="quick-action-btn" onClick={toggleTheme} style={{ width: '100%', marginBottom: '10px' }}>
-                <span>{theme === 'dark' ? '☀️ Işık Modu' : '🌙 Koyu Mod'}</span>
-              </button>
-              <button className="nav-item logout-btn" onClick={logout}>
-                <span style={{ marginRight: '8px' }}>🚪</span>
-                <span className="nav-label">Çıkış Yap</span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="quick-action-btn" onClick={toggleTheme} style={{ flex: 1, fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />} {theme === 'dark' ? 'Light' : 'Dark'}
+                </button>
+                <button className="quick-action-btn" onClick={toggleLanguage} style={{ flex: 1, fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <Globe size={14} /> {i18n.language === 'tr' ? 'EN' : 'TR'}
+                </button>
+              </div>
+              <button className="nav-item logout-btn" onClick={logout} style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '10px 16px' }}>
+                <LogOut size={20} style={{ marginRight: '10px' }} />
+                <span className="nav-label">{t('logout')}</span>
               </button>
             </motion.div>
           </motion.div>

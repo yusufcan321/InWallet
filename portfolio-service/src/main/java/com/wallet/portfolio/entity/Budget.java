@@ -6,11 +6,6 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "budgets")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Budget {
 
     @Id
@@ -28,5 +23,21 @@ public class Budget {
     private BigDecimal limitAmount;
 
     @Column(nullable = false)
-    private String period = "MONTHLY"; // MONTHLY, YEARLY
+    private String period = "MONTHLY";
+
+    public Budget() {}
+    public Budget(Long id, User user, String category, BigDecimal limitAmount, String period) {
+        this.id = id; this.user = user; this.category = category; this.limitAmount = limitAmount; this.period = period;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    public BigDecimal getLimitAmount() { return limitAmount; }
+    public void setLimitAmount(BigDecimal limitAmount) { this.limitAmount = limitAmount; }
+    public String getPeriod() { return period; }
+    public void setPeriod(String period) { this.period = period; }
 }

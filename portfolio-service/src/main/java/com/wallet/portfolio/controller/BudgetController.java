@@ -10,11 +10,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/budgets")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class BudgetController {
 
     private final BudgetService budgetService;
+
+    public BudgetController(BudgetService budgetService) {
+        this.budgetService = budgetService;
+    }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Budget>> getBudgets(@PathVariable Long userId) {

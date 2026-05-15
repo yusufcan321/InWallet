@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class TransactionService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionService.class);
@@ -22,6 +21,14 @@ public class TransactionService {
     private final com.wallet.portfolio.repository.BudgetRepository budgetRepository;
     private final com.wallet.portfolio.service.EmailService emailService;
     private final com.wallet.portfolio.kafka.TransactionProducer transactionProducer;
+
+    public TransactionService(TransactionRepository transactionRepository, AssetService assetService, com.wallet.portfolio.repository.BudgetRepository budgetRepository, com.wallet.portfolio.service.EmailService emailService, com.wallet.portfolio.kafka.TransactionProducer transactionProducer) {
+        this.transactionRepository = transactionRepository;
+        this.assetService = assetService;
+        this.budgetRepository = budgetRepository;
+        this.emailService = emailService;
+        this.transactionProducer = transactionProducer;
+    }
 
     public List<Transaction> getTransactionsByUserId(Long userId) {
         return transactionRepository.findByUserId(userId);

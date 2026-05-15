@@ -10,11 +10,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/recurring-transactions")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class RecurringTransactionController {
 
     private final RecurringTransactionService recurringService;
+
+    public RecurringTransactionController(RecurringTransactionService recurringService) {
+        this.recurringService = recurringService;
+    }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<RecurringTransaction>> getByUserId(@PathVariable Long userId) {

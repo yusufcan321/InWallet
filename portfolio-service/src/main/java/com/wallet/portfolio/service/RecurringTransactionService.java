@@ -13,12 +13,16 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class RecurringTransactionService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RecurringTransactionService.class);
     private final RecurringTransactionRepository recurringRepository;
     private final TransactionRepository transactionRepository;
+
+    public RecurringTransactionService(RecurringTransactionRepository recurringRepository, TransactionRepository transactionRepository) {
+        this.recurringRepository = recurringRepository;
+        this.transactionRepository = transactionRepository;
+    }
 
     public List<RecurringTransaction> getByUserId(Long userId) {
         return recurringRepository.findByUserId(userId);

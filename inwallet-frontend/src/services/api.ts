@@ -280,6 +280,14 @@ export const aiApi = {
     if (!res.ok) throw new Error('AI görseli analiz edemedi.');
     return res.text();
   },
+
+  getAutonomousInsight: async (userId: number) => {
+    const res = await request(`${AI_URL}/api/ai/insight?userId=${userId}`, {
+      method: 'GET',
+    });
+    if (!res.ok) throw new Error('AI içgörüsü alınamadı.');
+    return res.text();
+  },
 };
 
 // ─── Market Data Endpoint ────────────────────────────────
