@@ -23,6 +23,7 @@ InWallet, yüksek ölçeklenebilirlik, performans ve yapay zeka entegrasyonu (Ag
 1. **Dinamik Portföy Yönetimi:** Altın, Hisse Senedi ve Kripto gibi varlıkların canlı veriler üzerinden kar/zarar hesabı.
 2. **AI Function Calling:** Yapay zeka, Java fonksiyonlarını (örn: `getUserPortfolio`) tetikleyerek gerçek zamanlı analiz yapabilir.
 3. **Akıllı Hedefler:** Tahmini enflasyon oranlarıyla güncellenen dinamik hedef takibi.
+4. **📱 Native Mobil Deneyim (PWA):** Uygulamayı telefonunuzdan açıp "Ana Ekrana Ekle" diyerek Native bir mobil uygulama gibi kullanabilirsiniz!
 
 ---
 
@@ -47,6 +48,18 @@ docker compose up --build -d
 - **Frontend:** [http://localhost:5173](http://localhost:5173)
 - **Backend API:** [http://localhost:8080](http://localhost:8080)
 - **Swagger UI:** [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+
+---
+
+## 📱 Mobil Uygulama Olarak Kullanım (PWA)
+
+InWallet, modern **Progressive Web App (PWA)** standartlarıyla geliştirilmiştir. Bu sayede hiçbir mağazaya (App Store / Google Play) ihtiyaç duymadan telefonunuza Native bir uygulama gibi kurabilirsiniz:
+
+1. Projeyi bilgisayarınızda ayağa kaldırın (`docker compose up -d`).
+2. Bilgisayarınızın bağlı olduğu yerel ağın IP adresini öğrenin (örn: `192.168.1.100`).
+3. Cep telefonunuzun tarayıcısından (Safari veya Chrome) `http://192.168.1.100:5173` adresine girin.
+4. Tarayıcının menüsünden **"Ana Ekrana Ekle (Add to Home Screen)"** butonuna basın.
+5. InWallet ikonu telefonunuzun menüsüne eklenecektir. Tıkladığınızda tarayıcı sınırları olmadan, tam ekran gerçek bir mobil uygulama deneyimi yaşayabilirsiniz!
 
 ---
 
