@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Bot, ShieldAlert, TrendingDown, Lightbulb, Target, ArrowRight, Sparkles } from 'lucide-react';
 import { aiApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -47,7 +48,7 @@ const InWalletAgent: React.FC = () => {
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px',
             boxShadow: '0 8px 24px rgba(59, 130, 246, 0.4)'
           }}>
-            🤖
+            <Bot size={32} color="white" />
           </div>
           <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 900 }}>InWallet Agent</h1>
         </div>
@@ -56,7 +57,7 @@ const InWalletAgent: React.FC = () => {
         </p>
         
         <h2 style={{ fontSize: '20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ color: 'var(--accent-blue)' }}>✨</span> Stratejik Değerlendirme
+          <span style={{ color: 'var(--accent-blue)', display: 'flex' }}><Sparkles size={20} /></span> Stratejik Değerlendirme
         </h2>
 
         <AnimatePresence mode="wait">
@@ -107,28 +108,28 @@ const InWalletAgent: React.FC = () => {
             { 
               title: 'Portföy Risk Analizi', 
               desc: 'Mevcut varlık dağılımınızın risk profilini inceleyin ve potansiyel tehlikeleri öğrenin.', 
-              icon: '🛡️',
+              icon: <ShieldAlert size={20} color="#ef4444" />,
               prompt: 'Portföyümün risk analizini yap. Hangi varlıklarda çok fazla risk alıyorum?',
               color: '#ef4444'
             },
             { 
               title: 'Harcama Optimizasyonu', 
               desc: 'Giderlerinizi analiz ederek nerede tasarruf yapabileceğinizi keşfedin.', 
-              icon: '📉',
+              icon: <TrendingDown size={20} color="#10b981" />,
               prompt: 'Giderlerimi inceleyip bana harcama optimizasyonu önerilerinde bulun.',
               color: '#10b981'
             },
             { 
               title: 'Yatırım Fırsatları', 
               desc: 'Piyasa koşullarına göre potansiyel yatırım alanlarını agent ile tartışın.', 
-              icon: '💡',
+              icon: <Lightbulb size={20} color="#f59e0b" />,
               prompt: 'Şu anki piyasa koşullarına göre bana 3 farklı yatırım alanı öner. Nedenlerini de açıkla.',
               color: '#f59e0b'
             },
             { 
               title: 'Hedef Planlayıcı', 
               desc: 'Finansal hedeflerinize ne kadar sürede ulaşabileceğinizi simüle edin.', 
-              icon: '🎯',
+              icon: <Target size={20} color="#8b5cf6" />,
               prompt: 'Finansal hedeflerimi incele ve bunlara ulaşmam için gerçekçi bir zaman çizelgesi çıkar.',
               color: '#8b5cf6'
             }
@@ -146,7 +147,7 @@ const InWalletAgent: React.FC = () => {
               <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>{action.title}</h3>
               <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{action.desc}</p>
               <div style={{ marginTop: 'auto', paddingTop: '16px', fontSize: '13px', fontWeight: 600, color: action.color, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                Agent\'a Sor <span style={{ fontSize: '16px' }}>→</span>
+                Agent'a Sor <ArrowRight size={16} />
               </div>
             </motion.div>
           ))}
