@@ -89,6 +89,27 @@ Sistem varsayılan olarak en yüksek hız ve kota verimliliği için `gemini-fla
 
 ---
 
+## 🐳 Docker Geliştirme İpuçları ve Hafıza Yönetimi
+
+Geliştirme yaparken (Development) her kod değişikliğinden sonra `docker compose up --build -d` kullanmak zaman kaybına ve "askıda kalan (dangling)" imajların bilgisayarınızın hafızasını doldurmasına neden olur.
+
+### 🧹 Hafızayı Temizleme
+Eğer Docker çok fazla alan kaplamaya başladıysa terminalinizde şu komutu çalıştırın:
+```bash
+docker system prune -f
+```
+*(Bu komut sadece kullanılmayan ve askıda kalan imaj/kalıntıları siler, aktif projenize zarar vermez.)*
+
+### ⚡ Hızlı Geliştirme Tavsiyesi (Live Reload)
+Sürekli build almamak için **Hibrit Yaklaşımı** öneriyoruz:
+1. Sadece altyapıyı Docker'da başlatın: `docker compose up postgres redis zookeeper kafka -d`
+2. **Frontend:** `inwallet-frontend` klasörüne gidip terminalden `npm run dev` çalıştırın.
+3. **Backend:** `portfolio-service` klasörüne gidip terminalden `./mvnw spring-boot:run` çalıştırın.
+
+Böylece kodda yaptığınız değişiklikler kaydettiğiniz an sisteme yansır!
+
+---
+
 ## 🤝 Takım Arkadaşları İçin Çalışma Rehberi
 
 Ekibimizin beraber sorunsuz çalışabilmesi için lütfen şu kurallara dikkat edelim:
