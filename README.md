@@ -55,11 +55,22 @@ docker compose up --build -d
 
 InWallet, modern **Progressive Web App (PWA)** standartlarıyla geliştirilmiştir. Bu sayede hiçbir mağazaya (App Store / Google Play) ihtiyaç duymadan telefonunuza Native bir uygulama gibi kurabilirsiniz:
 
+### 1. Bağlantı Adımını Hazırlama
 1. Projeyi bilgisayarınızda ayağa kaldırın (`docker compose up -d`).
 2. Bilgisayarınızın bağlı olduğu yerel ağın IP adresini öğrenin (örn: `192.168.1.100`).
-3. Cep telefonunuzun tarayıcısından (Safari veya Chrome) `http://192.168.1.100:5173` adresine girin.
-4. Tarayıcının menüsünden **"Ana Ekrana Ekle (Add to Home Screen)"** butonuna basın.
-5. InWallet ikonu telefonunuzun menüsüne eklenecektir. Tıkladığınızda tarayıcı sınırları olmadan, tam ekran gerçek bir mobil uygulama deneyimi yaşayabilirsiniz!
+3. Cep telefonunuzun tarayıcısından `http://192.168.1.100:5173` adresine girin.
+
+### 🍎 iPhone (iOS / Safari) Kurulumu
+1. Safari'nin alt kısmında bulunan **Paylaş** butonuna (kare içinden yukarı doğru çıkan ok simgesi) dokunun.
+2. Açılan menüyü aşağı doğru kaydırın ve **"Ana Ekrana Ekle" (Add to Home Screen)** seçeneğine dokunun.
+3. Sağ üst köşedeki **"Ekle" (Add)** butonuna basın.
+4. Telefonunuzun ana ekranına **InWallet** ikonu eklenecektir. İkona tıkladığınızda Safari arayüzü olmadan tam ekran açılır!
+
+### 🤖 Android (Chrome) Kurulumu
+1. Chrome'un sağ üst köşesindeki **Üç Nokta (⋮)** menüsüne dokunun.
+2. Açılan listeden **"Ana Ekrana Ekle" (Add to Home Screen)** veya **"Uygulamayı Yükle" (Install App)** seçeneğine dokunun.
+3. Çıkan onay penceresinde **"Yükle"** veya **"Ekle"** butonuna basın.
+4. Uygulama otomatik olarak telefonunuzun ana ekranına yerleşecektir!
 
 ---
 
