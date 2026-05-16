@@ -48,7 +48,7 @@ public class MarketDataService {
                 .distinct()
                 .collect(Collectors.toList());
 
-        List<String> defaultSymbols = List.of("THYAO", "ASTOR", "BTC", "ETH", "AAPL", "XAU");
+        List<String> defaultSymbols = List.of("THYAO", "ASTOR", "TUPRS", "EREGL", "BTC", "ETH", "AAPL", "NVDA", "TSLA", "XAU", "XAG");
         for (String s : defaultSymbols) {
             if (!userSymbols.contains(s)) userSymbols.add(s);
         }

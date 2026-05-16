@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, ShieldAlert, TrendingDown, Lightbulb, Target, ArrowRight, Sparkles } from 'lucide-react';
+import { Bot, ShieldAlert, TrendingDown, Lightbulb, Target, ArrowRight, Sparkles, Newspaper } from 'lucide-react';
 import { aiApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,14 +12,14 @@ const InWalletAgent: React.FC = () => {
   useEffect(() => {
     const fetchInsight = async () => {
       if (!userId) return;
-      
+
       const cached = sessionStorage.getItem(`ai_insight_${userId}`);
       if (cached) {
         setInsight(cached);
         setLoading(false);
         return;
       }
-      
+
       try {
         const data = await aiApi.getAutonomousInsight(Number(userId));
         setInsight(data);
@@ -55,14 +55,14 @@ const InWalletAgent: React.FC = () => {
         <p style={{ color: 'var(--text-secondary)', marginBottom: '40px', marginLeft: '72px' }}>
           Otonom portföy analiziniz ve stratejik finansal asistanınız.
         </p>
-        
+
         <h2 style={{ fontSize: '20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ color: 'var(--accent-blue)', display: 'flex' }}><Sparkles size={20} /></span> Stratejik Değerlendirme
         </h2>
 
         <AnimatePresence mode="wait">
           {loading ? (
-            <motion.div 
+            <motion.div
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -77,7 +77,7 @@ const InWalletAgent: React.FC = () => {
               </p>
             </motion.div>
           ) : (
-            <motion.div 
+            <motion.div
               key="content"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -105,36 +105,43 @@ const InWalletAgent: React.FC = () => {
         <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '20px' }}>Agent Yetenekleri</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
           {[
-            { 
-              title: 'Portföy Risk Analizi', 
-              desc: 'Mevcut varlık dağılımınızın risk profilini inceleyin ve potansiyel tehlikeleri öğrenin.', 
+            {
+              title: 'Günlük Finans Haberleri',
+              desc: 'Portföyünüzdeki şirketler hakkında SPK onayları, temettüler ve önemli haberleri alın.',
+              icon: <Newspaper size={20} color="#3b82f6" />,
+              prompt: 'Portföyümdeki varlıklar hakkında (örneğin temettü, SPK onayı, şirket haberleri) önemli son gelişmeleri ve günlük finans haberlerini özetle.',
+              color: '#3b82f6'
+            },
+            {
+              title: 'Portföy Risk Analizi',
+              desc: 'Mevcut varlık dağılımınızın risk profilini inceleyin ve potansiyel tehlikeleri öğrenin.',
               icon: <ShieldAlert size={20} color="#ef4444" />,
               prompt: 'Portföyümün risk analizini yap. Hangi varlıklarda çok fazla risk alıyorum?',
               color: '#ef4444'
             },
-            { 
-              title: 'Harcama Optimizasyonu', 
-              desc: 'Giderlerinizi analiz ederek nerede tasarruf yapabileceğinizi keşfedin.', 
+            {
+              title: 'Harcama Optimizasyonu',
+              desc: 'Giderlerinizi analiz ederek nerede tasarruf yapabileceğinizi keşfedin.',
               icon: <TrendingDown size={20} color="#10b981" />,
               prompt: 'Giderlerimi inceleyip bana harcama optimizasyonu önerilerinde bulun.',
               color: '#10b981'
             },
-            { 
-              title: 'Yatırım Fırsatları', 
-              desc: 'Piyasa koşullarına göre potansiyel yatırım alanlarını agent ile tartışın.', 
+            {
+              title: 'Yatırım Fırsatları',
+              desc: 'Piyasa koşullarına göre potansiyel yatırım alanlarını agent ile tartışın.',
               icon: <Lightbulb size={20} color="#f59e0b" />,
               prompt: 'Şu anki piyasa koşullarına göre bana 3 farklı yatırım alanı öner. Nedenlerini de açıkla.',
               color: '#f59e0b'
             },
-            { 
-              title: 'Hedef Planlayıcı', 
-              desc: 'Finansal hedeflerinize ne kadar sürede ulaşabileceğinizi simüle edin.', 
+            {
+              title: 'Hedef Planlayıcı',
+              desc: 'Finansal hedeflerinize ne kadar sürede ulaşabileceğinizi simüle edin.',
               icon: <Target size={20} color="#8b5cf6" />,
               prompt: 'Finansal hedeflerimi incele ve bunlara ulaşmam için gerçekçi bir zaman çizelgesi çıkar.',
               color: '#8b5cf6'
             }
           ].map((action, i) => (
-            <motion.div 
+            <motion.div
               key={i}
               whileHover={{ y: -5, boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
               className="glass-card"

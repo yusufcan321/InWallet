@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Variants } from 'framer-motion';
+import { Flame, Edit2, Loader2, Lightbulb, Medal, TrendingUp, Home, Coins } from 'lucide-react';
 import { financialHealthApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -66,7 +67,7 @@ const InflationDefense: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              🔥 Enflasyon Savunma Analizi
+              <Flame size={24} color="#ef4444" /> Enflasyon Savunma Analizi
             </h2>
             <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
               Nakit paranın gerçek değeri zaman içinde nasıl azalıyor? Bunu durdurmak için ne yapmalısın?
@@ -111,10 +112,10 @@ const InflationDefense: React.FC = () => {
                 padding: '8px 16px', borderRadius: '20px',
                 border: '2px dashed var(--border-color)',
                 background: 'transparent', color: 'var(--text-secondary)',
-                fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+                fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
               }}
             >
-              ✏️ Özel
+              <Edit2 size={16} /> Özel
             </motion.button>
           </div>
 
@@ -160,7 +161,7 @@ const InflationDefense: React.FC = () => {
       {/* Yükleniyor */}
       {loading && !data && (
         <div className="glass-card" style={{ padding: '48px', textAlign: 'center' }}>
-          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }} style={{ fontSize: '28px', display: 'inline-block' }}>⚙️</motion.div>
+          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }} style={{ display: 'inline-block' }}><Loader2 size={28} color="var(--text-secondary)" /></motion.div>
           <div style={{ marginTop: '12px', color: 'var(--text-secondary)' }}>Analiz hesaplanıyor...</div>
         </div>
       )}
@@ -274,18 +275,18 @@ const InflationDefense: React.FC = () => {
             transition={{ delay: 0.5 }}
             style={{ padding: '20px 24px', background: 'rgba(59,130,246,0.05)', borderLeft: '4px solid var(--accent-blue)' }}
           >
-            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-blue)', marginBottom: '10px' }}>
-              💡 Enflasyona Karşı Stratejiler
+            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-blue)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Lightbulb size={16} /> Enflasyona Karşı Stratejiler
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
               {[
-                { emoji: '🥇', title: 'Altın', desc: 'Tarihsel enflasyon kalkanı' },
-                { emoji: '📈', title: 'BIST Hisseleri', desc: 'Uzun vadede enflasyonu geçer' },
-                { emoji: '🏠', title: 'Gayrimenkul', desc: 'Kira getirisi + değer artışı' },
-                { emoji: '💱', title: 'Döviz/Kripto', desc: 'TL riskine karşı koruma' },
+                { icon: <Medal size={20} color="#f59e0b" />, title: 'Altın', desc: 'Tarihsel enflasyon kalkanı' },
+                { icon: <TrendingUp size={20} color="#10b981" />, title: 'BIST Hisseleri', desc: 'Uzun vadede enflasyonu geçer' },
+                { icon: <Home size={20} color="#8b5cf6" />, title: 'Gayrimenkul', desc: 'Kira getirisi + değer artışı' },
+                { icon: <Coins size={20} color="#a78bfa" />, title: 'Döviz/Kripto', desc: 'TL riskine karşı koruma' },
               ].map(s => (
                 <div key={s.title} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: '20px' }}>{s.emoji}</span>
+                  <div style={{ marginTop: '2px' }}>{s.icon}</div>
                   <div>
                     <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>{s.title}</div>
                     <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{s.desc}</div>

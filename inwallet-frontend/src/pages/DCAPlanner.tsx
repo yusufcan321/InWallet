@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
+import { LineChart, Rocket, History, Lightbulb } from 'lucide-react';
 import { marketApi } from '../services/api';
 
 interface AssetOption {
@@ -120,7 +121,7 @@ const DCAPlanner: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div>
             <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              📈 DCA Yatırım Planlayıcısı
+              <LineChart size={28} color="#3b82f6" /> DCA Yatırım Planlayıcısı
             </h2>
             <p style={{ margin: '6px 0 0', fontSize: '14px', color: 'var(--text-secondary)' }}>
               Düzenli yatırımın gücünü keşfedin ve stratejinizi oluşturun.
@@ -138,7 +139,7 @@ const DCAPlanner: React.FC = () => {
                 fontWeight: 700, fontSize: '13px', transition: 'all 0.2s'
               }}
             >
-              🚀 Gelecek Simülasyonu
+              <Rocket size={16} /> Gelecek Simülasyonu
             </button>
             <button 
               onClick={() => setMode('backtest')}
@@ -149,7 +150,7 @@ const DCAPlanner: React.FC = () => {
                 fontWeight: 700, fontSize: '13px', transition: 'all 0.2s'
               }}
             >
-              ⏪ Geçmiş Backtest
+              <History size={16} /> Geçmiş Backtest
             </button>
           </div>
         </div>
@@ -249,7 +250,7 @@ const DCAPlanner: React.FC = () => {
             </div>
 
             <div style={{ marginTop: '24px', padding: '16px 20px', borderRadius: '12px', background: 'rgba(59,130,246,0.05)', borderLeft: '4px solid var(--accent-blue)' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-blue)', marginBottom: '4px' }}>💡 AI Strateji Notu</div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-blue)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}><Lightbulb size={16} /> AI Strateji Notu</div>
               <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                 {mode === 'future' ? (
                   `${asset.label} yatırımı ile düzenli birikim yapmanız durumunda, yıllık %${Math.round(asset.annualReturn*100)} getiri ile 2 yıl sonunda ana paranızı ${profitPct > 50 ? 'ciddi oranda katlamış' : 'artırmış'} olacaksınız.`
