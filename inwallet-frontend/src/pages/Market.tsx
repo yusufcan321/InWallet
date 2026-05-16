@@ -6,10 +6,15 @@ import { marketApi, assetApi, transactionApi } from '../services/api';
 const ASSET_META: Record<string, { label: string; type: string; category: string }> = {
   THYAO: { label: 'Türk Hava Yolları', type: 'Hisse',  category: 'BIST'   },
   ASTOR: { label: 'Astor Enerji',       type: 'Hisse',  category: 'BIST'   },
-  TUPRS: { label: 'Tüpraş',            type: 'Hisse',  category: 'BIST'   },
+  TUPRS: { label: 'Tüpraş',             type: 'Hisse',  category: 'BIST'   },
+  EREGL: { label: 'Erdemir Demir Çelik',type: 'Hisse',  category: 'BIST'   },
   BTC:   { label: 'Bitcoin',            type: 'Kripto', category: 'Global' },
+  ETH:   { label: 'Ethereum',           type: 'Kripto', category: 'Global' },
   AAPL:  { label: 'Apple Inc.',         type: 'Hisse',  category: 'US'     },
+  NVDA:  { label: 'Nvidia Corp.',       type: 'Hisse',  category: 'US'     },
+  TSLA:  { label: 'Tesla Inc.',         type: 'Hisse',  category: 'US'     },
   XAU:   { label: 'Gram Altın',         type: 'Emtia',  category: 'Emtia'  },
+  XAG:   { label: 'Gümüş',              type: 'Emtia',  category: 'Emtia'  },
 };
 
 const Market: React.FC = () => {
